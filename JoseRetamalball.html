@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Canvas</title>
+
+    <style type="text/css">	
+	
+		body 
+		{
+		background-color: white;
+		}
+		
+		canvas
+		{
+			border-style: solid;
+			border-width: 2px;
+		}
+    </style>
+
+  </head>
+
+  <body>
+	
+	<h1> Jose Ignacio Retamal </h1>
+	
+    <canvas id="canvas-for-ball"></canvas>
+
+    <script type="text/javascript">
+	
+		// Gets a handle to the element with id canvasOne.
+		var canvas = document.getElementById("canvas-for-ball");
+
+		// Get a 2D context for the canvas.
+		var ctx = canvas.getContext("2d");
+
+		//change size of canvas.
+		canvas.width = 400;
+		canvas.height = 400;
+		
+		// The vertical location of the ball.
+		var y = 10;
+		var speedY = 1;
+		// A function to repeat every time the animation loops.
+
+		function repeatme() 
+		{
+		
+		//clear canvas
+		ctx.clearRect(0,0,400,400);
+		
+		// Draw the ball (stroked, not filled).
+		ctx.beginPath();
+		ctx.arc(50, y, 3, 0, 2 * Math.PI);
+		ctx.stroke();
+
+		// Update the y location.
+		y += speedY;
+
+		//change direction in edge
+		if( y == 400 || y == 0 )
+		{
+			speedY = speedY*(-1);
+		}
+		
+		window.requestAnimationFrame(repeatme);
+
+		}//function repeatme()
+		
+		// Get the animation going.
+		//repeatme();
+		
+		
+		
+		class Ball
+		{
+		
+			constructor(x,y,radius,speedX,speedY)
+			{
+			
+				this.radius = radius;
+				this.x = x;
+				this.y = y;
+				this.speedX = speedX;
+				this.speedY = speedY;
+				this.rotation = 0;
+				this.isClockwise = false;
+				
+			}//constructor
+			
+			//Draw ball in canvas
+			draw()
+			{
+				//draw normal circle
+				ctx.beginPath();
+				ctx.arc(this.x ,this.y ,this.radius, 0, 2 * Math.PI);
+				ctx.stroke();
+				
+			}//draw()
+			
+			
+			rotate(amount)
+			{
+				if(this.isClockwise)
+				{
+					this.rotation += amount;
+				}else
+				{
+					this.rotation -= amount;
+				}
+			}
+			
+			drawBeachball()
+			{
+				//draw normal circle
+				ctx.beginPath();
+				ctx.arc(this.x ,this.y ,this.radius, 0, 2 * Math.PI);
+				ctx.stroke();
+				
+				//draw first line from righ edge to center
+				
+				
+				//fill circle
+				ctx.fillStyle = "orange";
+				
+				ctx.fill();
+				
+				//draw lines
+				
+				//start angle for then increase
+				var s = 2*Math.PI + this.rotation;
+				var increaseAngle = (2*Math.PI) / 7  ;
+				var startAngle = s;
+				
+				ctx.moveTo(this.x,this.y);
+				
+				ctx.lineTo(this.x+ this.radius*Math.cos(startAngle) , this.y+ this.radius * Math.sin(startAngle)  );
+				//ctx.lineTo(this.x  , this.y );
+				for(var i =0;i<6;i++)
+				{
+				
+					ctx.moveTo(this.x,this.y);
+					
+					startAngle+= increaseAngle;
+					ctx.lineTo(this.x+ this.radius*Math.cos(startAngle) , this.y+ this.radius * Math.sin(startAngle)  );
+				
+				}
+			
+				ctx.moveTo(this.x,this.y);
+				
+				ctx.stroke();
+				
+				//draw small inner circle
+				ctx.beginPath();
+				ctx.arc(this.x ,this.y ,this.radius*0.95, 0, 2 * Math.PI);
+				ctx.stroke();
+				
+			}
+			
+			move()
+			{
+				//increse/decrease x and y by the speed
+				this.x += this.speedX;
+				this.y += this.speedY;
+				
+				//change direction when reach canvas border
+				if(this.y == (400 - this.radius)  || this.y == (0 + this.radius ) )
+				{
+					this.changeYDirection();
+					
+					if(this.isClockwise)
+					{
+						this.isClockwise = false;
+					}else
+					{
+						this.isClockwise = true;
+					}
+					
+				}
+				if(this.x == (400 - this.radius)  || this.x == (0 + this.radius ) )
+				{
+					this.changeXDirection();
+					
+					if(this.isClockwise)
+					{
+						this.isClockwise = false;
+					}else
+					{
+						this.isClockwise = true;
+					}
+				}
+				
+			}//move(
+			
+			//for resize
+			resize(radius)
+			{
+				this.radius = radius;
+				
+			}//resize(x,y)
+			
+			changeYDirection()
+			{
+				this.speedY = this.speedY*( -1 );
+			}
+			
+			changeXDirection()
+			{
+				this.speedX = this.speedX*( -1 );
+			}
+			
+		}//class Ball
+		
+		var myBall = new Ball(80,80,80,2,1);
+	//	myBall.draw();
+		//myBall.drawBeachball();
+		function repeatBallBounce()
+		{
+			//clear canvas
+			ctx.clearRect(0,0,400,400);
+			
+			//myBall.draw();
+			
+			
+			myBall.move();
+			myBall.rotate(0.01);
+			myBall.drawBeachball();
+			
+			window.requestAnimationFrame(repeatBallBounce);
+		
+		}//function repeatBallBounce()
+		
+		repeatBallBounce();
+		
+		
+		
+    </script>
+
+  </body>
+
+</html>
