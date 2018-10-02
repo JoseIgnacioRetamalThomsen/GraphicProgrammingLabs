@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 <html>
+<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 
 <head>
 	<meta charset="UTF-8">
@@ -29,13 +30,17 @@
 
 		// Gets a handle to the element with id canvasOne.
 		var canvas = document.getElementById("canvas-for-ball");
+		var canvasSize = {
+			width: 800,
+			height: 800
+		}
 
 		// Get a 2D context for the canvas.
 		var ctx = canvas.getContext("2d");
 
 		//change size of canvas.
-		canvas.width = 400;
-		canvas.height = 400;
+		canvas.width = canvasSize.width;
+		canvas.height = canvasSize.height;
 
 		// The vertical location of the ball.
 		var y = 10;
@@ -84,6 +89,9 @@
 				//other
 				this.rotation = 0; //rotation increase
 				this.isClockwise = false;  //rotation direction
+				this.rotationSpeed = 0;
+
+				this.gravity = 2.9;
 
 			}//constructor
 
@@ -99,9 +107,9 @@
 			//roatate the ball by the amount parameter in isClockwise direction
 			rotate(amount) {
 				if (this.isClockwise) {
-					this.rotation += amount;
+					this.rotation += amount + this.rotasionSpeed;
 				} else {
-					this.rotation -= amount;
+					this.rotation -= amount + this.rotationSpeed;
 				}
 			}
 
@@ -155,27 +163,46 @@
 			}//end drawBeachball() 
 
 			move() {
+				this.speedY +=this.gravity;
 				//increse/decrease x and y by the speed
-				this.x += this.speedX;
+				this.x += this.speedX ;
 				this.y += this.speedY;
 
 				//change direction when reach canvas  horizontal border
-				if (this.y == (400 - this.radius) || this.y == (0 + this.radius)) {
+				
+				if (this.y >= (canvasSize.height - this.radius) ) {
 
+					//bounse
+					this.speedY -= 0.2;
+					this.speedY = Math.abs(this.speedY);
 					this.changeYDirection();
 
-					this.invertRotation();
+					//this.invertRotation();
 
+				}
+				if(this.y > (canvasSize.height - this.radius) ) {
+					this.y = (canvasSize.height - this.radius);
+				}
+
+				if(this.y == (0 + this.radius)) {
+					this.speedY = (-1)*Math.abs(this.speedY);
+					
 				}
 
 				//change direction when reach canvas  vertical border
-				if (this.x == (400 - this.radius) || this.x == (0 + this.radius)) {
+				//right
+				if (this.x >= (canvasSize.width - this.radius) ) {
 
 					this.changeXDirection();
 
-					this.invertRotation();
+					//this.invertRotation();
 
 				}
+				//bottom
+				if(this.x <= (0 + this.radius)) {
+					this.changeXDirection();
+				}
+
 
 			}//end move()
 
@@ -206,21 +233,32 @@
 
 			}//end of invertRotation()
 
+			changeXSpeed(amount) {
+
+				this.speedX += amount;
+			}
+
 		}//end of class Ball
 
 		//create a new ball
 		var myBall = new Ball(80, 80, 80, 2, 3, 7);
 
+	var myBall1 =  new Ball(80, 80, 80, 4, 4, 7);
 		//funtion for call recursively
 		function repeatBallBounce() {
 
 			//clear canvas
-			ctx.clearRect(0, 0, 400, 400);
+			ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
 			//ball actions
-			myBall.move();
 			myBall.rotate(0.01);
+			myBall.move();
+
 			myBall.drawBeachball();
+
+			myBall1.rotate(0.01);
+			myBall1.move();
+			myBall1.drawBeachball();
 
 			//recursive call
 			window.requestAnimationFrame(repeatBallBounce);
@@ -230,7 +268,84 @@
 		//start recursive call
 		repeatBallBounce();
 
+		//key event
 
+		// Add a Javascript event listener to the keypress event.
+		window.addEventListener("keypress", function (event) {
+			// Just log the event to the console.
+
+			console.log(event);
+			/*
+			//right arrow
+			if (event.keyCode == 39) {
+				myBall.speedX += 1;
+				console.log("here");
+			}*/
+		});
+
+		$(document.body).on('keydown', function (e) {
+			console.log(e.which);
+			switch (e.which) {
+				// key code for left arrow
+				case 37:
+					console.log('left arrow key pressed!');
+					myBall.speedX -= 1;
+
+					break;
+
+				// key code for right arrow
+				case 39:
+					console.log('right arrow key pressed!');
+					myBall.speedX += 1;
+					break;
+				// key up pressed
+				case 38:
+					myBall.speedY -= 5;
+					break;
+				//key down pressed
+				case 40:
+					myBall.speedY += 1;
+					console.log('top arrow key pressed!');
+					break;
+
+				case 82://left
+					myBall.rotationSpeed += 10;
+					console.log('r key pressed!');
+					break;
+				case 80: //right
+					console.log('p arrow key pressed!');
+					myBall.rotationSpeed -= 10;
+					break;
+
+			}
+		});
+
+		//mouse event
+		var canvasPosition = {
+			x: canvas.offsetLeft,
+			y: canvas.offsetTop
+		}
+		canvas.addEventListener("click", function (event) {
+
+
+			var mouse = {
+				x: event.pageX - canvasPosition.x,
+				y: event.pageY - canvasPosition.y
+			}
+
+
+			myBall.x = mouse.x;
+			myBall.y = mouse.y;
+			myBall.draw();
+
+			noClicks += 1;
+			console.log(noClicks);
+
+
+		});
+
+		//second ball
+	
 
 	</script>
 
