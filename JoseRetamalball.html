@@ -44,7 +44,7 @@
 
 		// The vertical location of the ball.
 		var y = 10;
-		var speedY = 1;
+		var dy = 1;
 		// A function to repeat every time the animation loops.
 
 		function repeatme() {
@@ -58,11 +58,11 @@
 			ctx.stroke();
 
 			// Update the y location.
-			y += speedY;
+			y += dy;
 
 			//change direction in edge
 			if (y == 400 || y == 0) {
-				speedY = speedY * (-1);
+				dy = dy * (-1);
 			}
 
 			window.requestAnimationFrame(repeatme);
@@ -76,14 +76,14 @@
 
 		class Ball {
 
-			constructor(x, y, radius, speedX, speedY, slides) {
+			constructor(x, y, radius, dx, dy, slides) {
 
 				//constructor variables
 				this.radius = radius; //radius of the ball
 				this.x = x; //x position center of the ball
 				this.y = y; //y position center of the ball
-				this.speedX = speedX; //vertical speed
-				this.speedY = speedY; // horizontal speed
+				this.dx = dx; //vertical speed
+				this.dy = dy; // horizontal speed
 				this.slides = slides
 
 				//other
@@ -91,9 +91,24 @@
 				this.isClockwise = false;  //rotation direction
 				this.rotationSpeed = 0;
 
-				this.gravity = 2.9;
+				this.ddy = 0;
+				this.ddx = 0;
+
+				//limits for the mid point of the ball
+				//I make this for calculate then only once.
+				this.limitsTransform = {
+
+					xLeft: this.radius,
+					xRight: canvasSize.width - this.radius,
+					yTop: this.radius,
+					yBottom: canvasSize.height - this.radius
+				};
+
+				
 
 			}//constructor
+
+			
 
 			//Draw ball in canvas
 			draw() {
@@ -162,49 +177,81 @@
 
 			}//end drawBeachball() 
 
+
+			/*
+			*	Move method:
+			*   Will change the position of the center of the ball using speed and aceleration
+			*	Should be call with draw for simulate movement
+			*	
+			*  Accelerated
+			* Using equation for Uniformly Accelerated Motion:
+			* v = v0 + a(t0-t)
+			* x = x0 + v0(t0-t) + (1/2)*a*(t0-t)^2
+			* where v0,x0,t0 are intial velocity, postion and time
+			* * If we consider each recursive call of the move function as "1 unti of time"
+			* for the actual call of the function :
+			* v = velocity at the end this unit of time
+			* v0 = velocty at the end of last call of the function.
+			* t0 =  last call, t  = actual so t0-t =1 since each call is one unit of time
+			* x0 = x position at call before this
+			* x = actual x postion at this call
+			* so we have:
+			* v0 = vf + a     (1)
+			* x = x0 + v0 + (1/2)*a => x += v0 + (1/2)*a      (2)
+			*/
+
+
 			move() {
-				this.speedY +=this.gravity;
-				//increse/decrease x and y by the speed
-				this.x += this.speedX ;
-				this.y += this.speedY;
+
+				//(2)
+				this.y += this.dy + (1 / 2) * this.ddy;
+				this.x += this.dx + (1 / 2) * this.ddx;
 
 				//change direction when reach canvas  horizontal border
-				
-				if (this.y >= (canvasSize.height - this.radius) ) {
 
-					//bounse
-					this.speedY -= 0.2;
-					this.speedY = Math.abs(this.speedY);
+				//botton
+				if (this.y >= this.limitsTransform.yBottom) {
+
+					//back if was out of camvas
+					this.y = this.limitsTransform.yBottom;
+
 					this.changeYDirection();
 
-					//this.invertRotation();
-
-				}
-				if(this.y > (canvasSize.height - this.radius) ) {
-					this.y = (canvasSize.height - this.radius);
 				}
 
-				if(this.y == (0 + this.radius)) {
-					this.speedY = (-1)*Math.abs(this.speedY);
-					
+				//top
+				if (this.y <= this.limitsTransform.yTop) {
+
+					//back if was out of camvas
+					this.y = this.limitsTransform.yTop
+					this.changeYDirection();
 				}
 
 				//change direction when reach canvas  vertical border
 				//right
-				if (this.x >= (canvasSize.width - this.radius) ) {
+				if (this.x >= this.limitsTransform.xRight) {
 
+					//back if was out of camvas
+					this.x = this.limitsTransform.xRight;
 					this.changeXDirection();
 
-					//this.invertRotation();
-
 				}
-				//bottom
-				if(this.x <= (0 + this.radius)) {
+				//lest
+				if (this.x <= this.limitsTransform.xLeft) {
+
+					//back if was out of camvas
+					this.x = this.limitsTransform.xLeft;
 					this.changeXDirection();
 				}
 
+				//(1)
+				this.dy += this.ddy;
+				this.dx += this.ddx;
 
 			}//end move()
+
+
+
 
 			//for resize
 			resize(radius) {
@@ -213,11 +260,11 @@
 			}//resize(x,y)
 
 			changeYDirection() {
-				this.speedY = this.speedY * (-1);
+				this.dy = this.dy * (-1);
 			}
 
 			changeXDirection() {
-				this.speedX = this.speedX * (-1);
+				this.dx = this.dx * (-1);
 			}
 
 			invertRotation() {
@@ -235,15 +282,17 @@
 
 			changeXSpeed(amount) {
 
-				this.speedX += amount;
+				this.dx += amount;
 			}
 
 		}//end of class Ball
 
 		//create a new ball
-		var myBall = new Ball(80, 80, 80, 2, 3, 7);
+		var myBall = new Ball(80, 120, 80, 2, 2, 7);
+		myBall.ddy = 2;
 
-	var myBall1 =  new Ball(80, 80, 80, 4, 4, 7);
+		var myBall1 = new Ball(80, 80, 80, 4, 4, 7);
+		myBall1.ddy = 5;
 		//funtion for call recursively
 		function repeatBallBounce() {
 
@@ -278,7 +327,7 @@
 			/*
 			//right arrow
 			if (event.keyCode == 39) {
-				myBall.speedX += 1;
+				myBall.dx += 1;
 				console.log("here");
 			}*/
 		});
@@ -289,22 +338,22 @@
 				// key code for left arrow
 				case 37:
 					console.log('left arrow key pressed!');
-					myBall.speedX -= 1;
+					myBall.dx -= 1;
 
 					break;
 
 				// key code for right arrow
 				case 39:
 					console.log('right arrow key pressed!');
-					myBall.speedX += 1;
+					myBall.dx += 1;
 					break;
 				// key up pressed
 				case 38:
-					myBall.speedY -= 5;
+					myBall.dy -= 5;
 					break;
 				//key down pressed
 				case 40:
-					myBall.speedY += 1;
+					myBall.dy += 1;
 					console.log('top arrow key pressed!');
 					break;
 
@@ -345,7 +394,7 @@
 		});
 
 		//second ball
-	
+
 
 	</script>
 
