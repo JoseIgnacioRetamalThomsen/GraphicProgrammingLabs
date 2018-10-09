@@ -76,7 +76,7 @@
 
 		class Ball {
 
-			constructor(x, y, radius, dx, dy, slides) {
+			constructor(x, y, radius, dx, dy, colour, m) {
 
 				//constructor variables
 				this.radius = radius; //radius of the ball
@@ -84,7 +84,7 @@
 				this.y = y; //y position center of the ball
 				this.dx = dx; //vertical speed
 				this.dy = dy; // horizontal speed
-				this.slides = slides
+				this.slides = 7;
 
 				//other
 				this.rotation = 0; //rotation increase
@@ -93,6 +93,10 @@
 
 				this.ddy = 0;
 				this.ddx = 0;
+
+				//lab 4 colour and mass
+				this.colour = colour;
+				this.m = m;
 
 				//limits for the mid point of the ball
 				//I make this for calculate then only once.
@@ -104,11 +108,11 @@
 					yBottom: canvasSize.height - this.radius
 				};
 
-				
+
 
 			}//constructor
 
-			
+
 
 			//Draw ball in canvas
 			draw() {
@@ -139,7 +143,7 @@
 
 
 				//fill circle
-				ctx.fillStyle = "orange";
+				ctx.fillStyle = this.colour;
 
 				ctx.fill();
 
@@ -288,16 +292,77 @@
 		}//end of class Ball
 
 		//create a new ball
-		var myBall = new Ball(80, 120, 80, 2, 2, 7);
-		myBall.ddy = 2;
+		//(x, y, radius, dx, dy,colour,m)
+		var myBall = new Ball(80, 120, 80, 3, 10, "red", 1);
+		myBall.ddy = 1;
 
-		var myBall1 = new Ball(80, 80, 80, 4, 4, 7);
-		myBall1.ddy = 5;
+		var myBall1 = new Ball(456, 560, 80, 1, 5, "blue", 1);
+		//myBall1.ddy = 5;
+
+
+		function detectCollision(b1, b2) {
+			var distanceForCollision = b1.radius + b2.radius;
+			var actualDistance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
+			//console.log("distance: " + distanceForCollision);
+			//console.log(" actuan d :" + actualDistance);
+			if (actualDistance <= distanceForCollision) {
+				console.log("Collision!!" + actualDistance);
+
+				//calculate x and y distance beetwen balls
+				var dx = b1.x - b2.x;
+				var dy = b1.y - b2.y;
+				var collisionAngle = Math.atan2(dy, dx);
+				console.log(collisionAngle);
+
+				//calculete total magnitud
+				var mag1 = Math.sqrt(b1.dx * b1.dx + b1.dy * b1.dy);
+				var mag2 = Math.sqrt(b2.dx * b2.dx + b2.dy * b2.dy);
+
+				console.log("m1" + mag1 + "m2" + mag2);
+
+				//determine balls direction
+				var d1 = Math.atan2(b1.dy, b1.dx);
+				var d2 = Math.atan2(b2.dy, b2.dx);
+
+				console.log("d1" + d1 + "d2" + d2);
+
+				//calculate new x and y vel
+				var dx1_new = mag1 * Math.cos(d1 - collisionAngle);
+				var dy1_new = mag1 * Math.sin(d1 - collisionAngle);
+				var dx2_new = mag2 * Math.cos(d2 - collisionAngle);
+				var dy2_new = mag2 * Math.sin(d2 - collisionAngle);
+
+				//final x speed for ball 1
+				var dx1_final = ((b1.m - b2.m) * dx1_new + ((b2.m + b2.m) * dx2_new)) / (b1.m + b2.m);
+				var dx2_final = ((b1.m + b1.m) * dx1_new + ((b2.m - b1.m) * dx2_new)) / (b1.m + b2.m);
+
+				//y is the same
+				var dy1_final = dy1_new;
+				var dy2_final = dy2_new;
+
+				
+
+				//final velocity in original 
+				b1.dx = Math.cos(collisionAngle) * dx1_final + Math.cos(collisionAngle + Math.PI / 2) * dy1_final;
+				b1.dy = Math.sin(collisionAngle) * dx1_final + Math.sin(collisionAngle + Math.PI / 2) * dy1_final;
+
+				b2.dy = Math.cos(collisionAngle) * dx2_final + Math.cos(collisionAngle + Math.PI / 2) * dy2_final;
+				b2.dx = Math.sin(collisionAngle) * dx2_final + Math.sin(collisionAngle + Math.PI / 2) * dy2_final;
+
+				//change color
+				var temp = b1.colour;
+				b1.colour = b2.colour;
+				b2.colour = temp;
+			}
+		}
+
 		//funtion for call recursively
 		function repeatBallBounce() {
 
 			//clear canvas
 			ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+
+	
 
 			//ball actions
 			myBall.rotate(0.01);
@@ -308,6 +373,9 @@
 			myBall1.rotate(0.01);
 			myBall1.move();
 			myBall1.drawBeachball();
+
+			//collision detection
+			detectCollision(myBall, myBall1);	
 
 			//recursive call
 			window.requestAnimationFrame(repeatBallBounce);
