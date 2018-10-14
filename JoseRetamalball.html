@@ -30,6 +30,7 @@
 
 		// Gets a handle to the element with id canvasOne.
 		var canvas = document.getElementById("canvas-for-ball");
+
 		var canvasSize = {
 			width: 800,
 			height: 800
@@ -45,8 +46,8 @@
 		// The vertical location of the ball.
 		var y = 10;
 		var dy = 1;
-		// A function to repeat every time the animation loops.
 
+		// A function to repeat every time the animation loops.
 		function repeatme() {
 
 			//clear canvas
@@ -91,8 +92,12 @@
 				this.isClockwise = false;  //rotation direction
 				this.rotationSpeed = 0;
 
+				//acceleration
 				this.ddy = 0;
 				this.ddx = 0;
+
+				//energy loss in wall collition
+				this.k = 1;
 
 				//lab 4 colour and mass
 				this.colour = colour;
@@ -125,6 +130,7 @@
 
 			//roatate the ball by the amount parameter in isClockwise direction
 			rotate(amount) {
+
 				if (this.isClockwise) {
 					this.rotation += amount + this.rotasionSpeed;
 				} else {
@@ -204,7 +210,6 @@
 			* x = x0 + v0 + (1/2)*a => x += v0 + (1/2)*a      (2)
 			*/
 
-
 			move() {
 
 				//(2)
@@ -214,12 +219,15 @@
 				//change direction when reach canvas  horizontal border
 
 				//botton
+				//ball going down dy = +;
 				if (this.y >= this.limitsTransform.yBottom) {
 
 					//back if was out of camvas
 					this.y = this.limitsTransform.yBottom;
 
 					this.changeYDirection();
+
+					this.apply();
 
 				}
 
@@ -229,6 +237,8 @@
 					//back if was out of camvas
 					this.y = this.limitsTransform.yTop
 					this.changeYDirection();
+
+					this.apply();
 				}
 
 				//change direction when reach canvas  vertical border
@@ -239,6 +249,8 @@
 					this.x = this.limitsTransform.xRight;
 					this.changeXDirection();
 
+					this.apply();
+
 				}
 				//lest
 				if (this.x <= this.limitsTransform.xLeft) {
@@ -246,6 +258,8 @@
 					//back if was out of camvas
 					this.x = this.limitsTransform.xLeft;
 					this.changeXDirection();
+
+					this.apply();
 				}
 
 				//(1)
@@ -254,8 +268,31 @@
 
 			}//end move()
 
+			/*
+			* Method for move back 1 frame, used when collition for avoid balls stay insede another.
+			*/
+			moveBack() {
+				this.x -= this.dx;
+				this.y -= this.dy;
+			}
 
+			increaseXSpeed(inc) {
 
+				this.dx += inc;
+
+			}
+
+			increaseYSpeed(inc) {
+
+				this.dy += inc;
+
+			}
+
+			increaseRotation(inc) {
+
+				this.rotationSpeed += inc;
+
+			}
 
 			//for resize
 			resize(radius) {
@@ -269,6 +306,11 @@
 
 			changeXDirection() {
 				this.dx = this.dx * (-1);
+			}
+
+			apply() {
+				this.dy *= this.k;
+				this.dx *= this.k;
 			}
 
 			invertRotation() {
@@ -298,84 +340,118 @@
 
 		var myBall1 = new Ball(456, 560, 80, 1, 5, "blue", 1);
 		//myBall1.ddy = 5;
+		var ballArray = { myBall, myBall1 }
 
+		class BallsSpace {
 
-		function detectCollision(b1, b2) {
-			var distanceForCollision = b1.radius + b2.radius;
-			var actualDistance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
-			//console.log("distance: " + distanceForCollision);
-			//console.log(" actuan d :" + actualDistance);
-			if (actualDistance <= distanceForCollision) {
-				console.log("Collision!!" + actualDistance);
-
-				//calculate x and y distance beetwen balls
-				var dx = b1.x - b2.x;
-				var dy = b1.y - b2.y;
-				var collisionAngle = Math.atan2(dy, dx);
-				console.log(collisionAngle);
-
-				//calculete total magnitud
-				var mag1 = Math.sqrt(b1.dx * b1.dx + b1.dy * b1.dy);
-				var mag2 = Math.sqrt(b2.dx * b2.dx + b2.dy * b2.dy);
-
-				console.log("m1" + mag1 + "m2" + mag2);
-
-				//determine balls direction
-				var d1 = Math.atan2(b1.dy, b1.dx);
-				var d2 = Math.atan2(b2.dy, b2.dx);
-
-				console.log("d1" + d1 + "d2" + d2);
-
-				//calculate new x and y vel
-				var dx1_new = mag1 * Math.cos(d1 - collisionAngle);
-				var dy1_new = mag1 * Math.sin(d1 - collisionAngle);
-				var dx2_new = mag2 * Math.cos(d2 - collisionAngle);
-				var dy2_new = mag2 * Math.sin(d2 - collisionAngle);
-
-				//final x speed for ball 1
-				var dx1_final = ((b1.m - b2.m) * dx1_new + ((b2.m + b2.m) * dx2_new)) / (b1.m + b2.m);
-				var dx2_final = ((b1.m + b1.m) * dx1_new + ((b2.m - b1.m) * dx2_new)) / (b1.m + b2.m);
-
-				//y is the same
-				var dy1_final = dy1_new;
-				var dy2_final = dy2_new;
-
-				
-
-				//final velocity in original 
-				b1.dx = Math.cos(collisionAngle) * dx1_final + Math.cos(collisionAngle + Math.PI / 2) * dy1_final;
-				b1.dy = Math.sin(collisionAngle) * dx1_final + Math.sin(collisionAngle + Math.PI / 2) * dy1_final;
-
-				b2.dy = Math.cos(collisionAngle) * dx2_final + Math.cos(collisionAngle + Math.PI / 2) * dy2_final;
-				b2.dx = Math.sin(collisionAngle) * dx2_final + Math.sin(collisionAngle + Math.PI / 2) * dy2_final;
-
-				//change color
-				var temp = b1.colour;
-				b1.colour = b2.colour;
-				b2.colour = temp;
+			constructor(b1, b2) {
+				this.balls = [b1, b2];
 			}
-		}
 
+			moveAll() {
+				for (var i = 0; i < this.balls.length; i++) {
+					this.balls[i].rotate(0.01);
+					this.balls[i].move();
+					this.balls[i].drawBeachball();
+				}
+
+
+			}
+			collisionAll(){
+				for (var i = 0; i < this.balls.length+1; i++) {
+					for(var k=i+1;k<this.balls.length;k++){
+						this.detectCollision(this.balls[i],this.balls[k]);
+					}
+				}
+			}
+
+			/*
+			* Will detect if collision happens using the radius, if it does will change speed using momentun law.
+			*/
+			detectCollision(b1, b2) {
+
+				var distanceForCollision = b1.radius + b2.radius;
+				var actualDistance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
+
+				//check if collision happens
+				if (actualDistance <= distanceForCollision) {
+
+					//if collition hapens we move then 1 frame back for ball inside the other bug
+					b1.moveBack();
+					b2.moveBack();
+
+					//test
+					console.log("Collision!!" + actualDistance);
+
+					//calculate x and y distance beetwen balls
+					var dx = b1.x - b2.x;
+					var dy = b1.y - b2.y;
+					var collisionAngle = Math.atan2(dy, dx);
+					console.log(collisionAngle);
+
+					//calculete total magnitud
+					var mag1 = Math.sqrt(b1.dx * b1.dx + b1.dy * b1.dy);
+					var mag2 = Math.sqrt(b2.dx * b2.dx + b2.dy * b2.dy);
+
+					console.log("m1" + mag1 + "m2" + mag2);
+
+					//determine balls direction
+					var d1 = Math.atan2(b1.dy, b1.dx);
+					var d2 = Math.atan2(b2.dy, b2.dx);
+
+					//calculate new x and y vel
+					var dx1_new = mag1 * Math.cos(d1 - collisionAngle);
+					var dy1_new = mag1 * Math.sin(d1 - collisionAngle);
+					var dx2_new = mag2 * Math.cos(d2 - collisionAngle);
+					var dy2_new = mag2 * Math.sin(d2 - collisionAngle);
+
+					//final x speed 
+					var dx1_final = ((b1.m - b2.m) * dx1_new + ((b2.m + b2.m) * dx2_new)) / (b1.m + b2.m);
+					var dx2_final = ((b1.m + b1.m) * dx1_new + ((b2.m - b1.m) * dx2_new)) / (b1.m + b2.m);
+
+					//y is the same
+					var dy1_final = dy1_new;
+					var dy2_final = dy2_new;
+
+					//final velocity in original 
+					b1.dx = Math.cos(collisionAngle) * dx1_final + Math.cos(collisionAngle + Math.PI / 2) * dy1_final;
+					b1.dy = Math.sin(collisionAngle) * dx1_final + Math.sin(collisionAngle + Math.PI / 2) * dy1_final;
+					b2.dy = Math.cos(collisionAngle) * dx2_final + Math.cos(collisionAngle + Math.PI / 2) * dy2_final;
+					b2.dx = Math.sin(collisionAngle) * dx2_final + Math.sin(collisionAngle + Math.PI / 2) * dy2_final;
+
+					//change color
+					var temp = b1.colour;
+					b1.colour = b2.colour;
+					b2.colour = temp;
+
+				}//end if
+
+			}//end function detectCollision(b1, b2)
+
+		}//end class
+
+		var s = new BallsSpace(myBall, myBall1);
 		//funtion for call recursively
 		function repeatBallBounce() {
 
 			//clear canvas
 			ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-	
 
+			s.moveAll();
+			s.collisionAll();
 			//ball actions
-			myBall.rotate(0.01);
-			myBall.move();
+			//myBall.rotate(0.01);
+			//myBall.move();
 
-			myBall.drawBeachball();
+			//myBall.drawBeachball();
 
-			myBall1.rotate(0.01);
-			myBall1.move();
-			myBall1.drawBeachball();
+			//myBall1.rotate(0.01);
+			//	myBall1.move();
+			//myBall1.drawBeachball();
 
 			//collision detection
-			detectCollision(myBall, myBall1);	
+			//s.detectCollision(myBall, myBall1);
 
 			//recursive call
 			window.requestAnimationFrame(repeatBallBounce);
@@ -385,57 +461,46 @@
 		//start recursive call
 		repeatBallBounce();
 
+
+
 		//key event
-
-		// Add a Javascript event listener to the keypress event.
-		window.addEventListener("keypress", function (event) {
-			// Just log the event to the console.
-
-			console.log(event);
-			/*
-			//right arrow
-			if (event.keyCode == 39) {
-				myBall.dx += 1;
-				console.log("here");
-			}*/
-		});
-
 		$(document.body).on('keydown', function (e) {
 			console.log(e.which);
 			switch (e.which) {
-				// key code for left arrow
+
+				// left 
 				case 37:
-					console.log('left arrow key pressed!');
-					myBall.dx -= 1;
-
+					myBall.increaseXSpeed(-1);
 					break;
 
-				// key code for right arrow
+				//right
 				case 39:
-					console.log('right arrow key pressed!');
-					myBall.dx += 1;
+					myBall.increaseXSpeed(1);
 					break;
+
 				// key up pressed
 				case 38:
-					myBall.dy -= 5;
+					myBall.increaseYSpeed(-2);
 					break;
-				//key down pressed
+
+				// down 
 				case 40:
-					myBall.dy += 1;
-					console.log('top arrow key pressed!');
+					myBall.increaseYSpeed(2);
 					break;
 
+				//r increse rotation to left
 				case 82://left
-					myBall.rotationSpeed += 10;
-					console.log('r key pressed!');
+					myBall.increaseRotation(0.01);
+
 					break;
-				case 80: //right
-					console.log('p arrow key pressed!');
-					myBall.rotationSpeed -= 10;
+				//t increse rotation to right
+				case 84: //right
+					myBall.increaseRotation(-0.01);
 					break;
 
-			}
-		});
+			}//switch
+
+		});//$
 
 		//mouse event
 		var canvasPosition = {
@@ -455,8 +520,6 @@
 			myBall.y = mouse.y;
 			myBall.draw();
 
-			noClicks += 1;
-			console.log(noClicks);
 
 
 		});
