@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+    </style>
+</head>
+
+<body>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/threejs/r84/three.min.js"></script>
+    <script type="text/javascript">
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(80, 1200 / 800, 0.1, 1000);// window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(1200, 800);//window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        var geometry = new THREE.SphereGeometry(1, 10, 10);
+        var material = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+        material.castShadow =true;
+        material.wireframe = false;
+        var sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        camera.position.z = 5
+
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 2);
+        scene.add(directionalLight);
+
+        //plane
+        var geometry = new THREE.PlaneGeometry(5, 5);
+        var material1 = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        material1.wireframe = false;
+        material1.castShadow =true;
+        var plane = new THREE.Mesh(geometry, material1);
+        //plane.rotateZ(Math.PI/2);
+        //plane.rotateY(Math.PI/2);
+        plane.rotation.x = Math.PI / 12;
+        plane.rotation.y = Math.PI / 12;
+        plane.position.x = -3;
+
+        scene.add(plane);
+
+        //spotlight
+        var spotLight = new THREE.SpotLight(0xffffff);
+        spotLight.position.set(4, 2, 1);
+        spotLight.castShadow =true;
+        scene.add(spotLight);
+
+        var spotLightHelper = new THREE.SpotLightHelper(spotLight);
+        scene.add(spotLightHelper);
+
+        var xPos = 0, yPos = 0, zPos = 0;
+        var verticalSpeed = 0.1;
+
+        sphere.position.x = xPos;
+        sphere.position.y = yPos;
+        sphere.position.z = zPos;
+        var hex = 0xffffff;
+        material.color.setHex(0xffffff);;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            //Code to rotate sphere   
+            sphere.rotateX(Math.PI / 180);
+            sphere.rotateY(Math.PI / 180);
+
+            console.log(sphere.position.x);
+            if (sphere.position.x >= 5) {
+                verticalSpeed = -1 * verticalSpeed;
+            }
+            if (sphere.position.x <= -5) {
+                verticalSpeed = -1 * verticalSpeed;
+            }
+
+            sphere.position.x += verticalSpeed;
+
+            material.color.setHex(hex);
+            hex--;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+
+</body>
+
+</html>
