@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+<!--Jose Retamal, Graphics programming Lab 2-4  , 2018-->
 <html>
 	<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 
@@ -32,10 +32,10 @@
 			<input type="number" id="newG" value="0.5">
 
 			<button id="gButton">Change gravity</button>
-			<h3>throw new ball bottom from center point with horizontal angle at anticlockwise direction.If a ball if throw when
-				there is another in the throw place both will disaper.</h3>
+			<h3>Throw new ball bottom from center point with horizontal angle at anticlockwise direction.There will be some
+				problem if you throw a ball when there is another ball at the trow spot.</h3>
 			angle in degrees= <input type="number" id="angle" value="90">
-			speed = <input type="number" id="speed" value="1">
+			speed = <input type="number" id="speed" value="10">
 			<button id="throwBall">Throw</button>
 			<h3>Big ball(orange at start), can be control using arrows, r and t for rotation, click in canvas for reposicion.</h3>
 			Print Msg to canvas when collision detected <button id="msg">Msg on/off</button>
@@ -463,9 +463,9 @@
 						b2.dx = Math.sin(collisionAngle) * dx2_final + Math.sin(collisionAngle + Math.PI / 2) * dy2_final;
 
 
-						//add lost of energy
-						b1.applyLostOfEnergyWithBalls(0.9);
-						b2.applyLostOfEnergyWithBalls(0.9);
+						//add lost of energy the number represent the Energy conserved
+						b1.applyLostOfEnergyWithBalls(0.95);
+						b2.applyLostOfEnergyWithBalls(0.95);
 
 						//if collition hapens we move then 1 frame back for ball inside the other bug
 						b1.moveBack();
