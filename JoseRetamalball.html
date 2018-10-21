@@ -1,583 +1,639 @@
 <!DOCTYPE html>
 
 <html>
-<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 
-<head>
-	<meta charset="UTF-8">
-	<title>Canvas</title>
+	<head>
+		<meta charset="UTF-8">
+		<title>Canvas</title>
 
-	<style type="text/css">
-		body {
-			background-color: white;
-		}
-
-		canvas {
-			border-style: solid;
-			border-width: 2px;
-		}
-	</style>
-
-</head>
-
-<body>
-
-	<div>
-		<h1> Jose Ignacio Retamal </h1>
-
-		<h2 class="gravity"> </h2>
-
-		<input type="number" id="newG" value="0.9">
-
-		<button>Change gravity</button>
-	</div>
-	<canvas id="canvas-for-ball"></canvas>
-
-	<script type="text/javascript">
-
-		// Gets a handle to the element with id canvasOne.
-		var canvas = document.getElementById("canvas-for-ball");
-
-		var canvasSize = {
-			width: 800,
-			height: 800
-		}
-
-		// Get a 2D context for the canvas.
-		var ctx = canvas.getContext("2d");
-
-		//change size of canvas.
-		canvas.width = canvasSize.width;
-		canvas.height = canvasSize.height;
-
-		/*
-		* Represent a 2D ball, can be draw as a normal ball or a beach ball
-		*/
-
-		class Ball {
-
-			constructor(x, y, radius, dx, dy, colour, m) {
-
-				//constructor variables
-				this.radius = radius; //radius of the ball
-				this.x = x; //x position center of the ball
-				this.y = y; //y position center of the ball
-				this.dx = dx; //vertical speed
-				this.dy = dy; // horizontal speed
-				this.slides = 7; //number of slides for beach ball
-
-
-				//other
-				this.xb; //position in last frame
-				this.yb; //position in last frame
-				this.rotation = 0; //rotation increase
-				this.isClockwise = false;  //rotation direction
-				this.rotationSpeed = 0;
-
-				//acceleration
-				this.ddy = 0;
-				this.ddx = 0;
-
-				//energy loss in wall collition with walls
-				//1 =100% means not energy lost so 0.9 mean 10% of energy lost.
-				this.k = 1;
-
-				//lab 4 colour and mass
-				this.colour = colour;
-				this.m = m;
-
-				//limits for the mid point of the ball
-				//I make this for calculate then only once.
-				this.limitsTransform = {
-
-					xLeft: this.radius,
-					xRight: canvasSize.width - this.radius,
-					yTop: this.radius,
-					yBottom: canvasSize.height - this.radius
-				};
-
-			}//constructor
-
-			//Draw ball in canvas
-			draw() {
-				//draw normal circle
-				ctx.beginPath();
-				ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-				ctx.stroke();
-
-			}//draw()
-
-			//roatate the ball by the amount parameter in isClockwise direction
-			rotate(amount) {
-
-				if (this.isClockwise) {
-					this.rotation += amount + this.rotasionSpeed;
-				} else {
-					this.rotation -= amount + this.rotationSpeed;
-				}
+		<style type="text/css">
+			body {
+				background-color: white;
 			}
 
-			//draw beach ball in canvas, using the bar slides for the number of sections
-			drawBeachball() {
-				//draw normal circle
-				ctx.beginPath();
-				ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-				ctx.stroke();
+			canvas {
+				border-style: solid;
+				border-width: 2px;
+			}
+		</style>
 
-				//fill circle
-				ctx.fillStyle = this.colour;
-				ctx.fill();
+	</head>
 
-				//start angle for then increase
-				var startAngle = 2 * Math.PI + this.rotation;
+	<body>
 
-				//angle for increase so the ball can rotate
-				var increaseAngle = (2 * Math.PI) / this.slides;
+		<div>
 
-				//move cursor back to center
-				ctx.moveTo(this.x, this.y);
+			<h1> Jose Ignacio Retamal </h1>
+			<h2 class="gravity"> </h2>
+			<h3>Gravity field can be change using the tex box below, the units are pixels/frames^2 so is not the same than the
+				phisical value of 9.8 m/s^2. Values around 0.5 will give a close aproach. </h3>
 
-				//loop for the numbe of slides
-				for (var i = 0; i < this.slides; i++) {
+			<input type="number" id="newG" value="0.5">
 
-					//draw line
-					ctx.lineTo(this.x + this.radius * Math.cos(startAngle), this.y + this.radius * Math.sin(startAngle));
+			<button id="gButton">Change gravity</button>
+			<h3>throw new ball bottom from center point with horizontal angle at anticlockwise direction.If a ball if throw when
+				there is another in the throw place both will disaper.</h3>
+			angle in degrees= <input type="number" id="angle" value="90">
+			speed = <input type="number" id="speed" value="1">
+			<button id="throwBall">Throw</button>
+			<h3>Big ball(orange at start), can be control using arrows, r and t for rotation, click in canvas for reposicion.</h3>
+			Print Msg to canvas when collision detected <button id="msg">Msg on/off</button>
+		</div>
+		<canvas id="canvas-for-ball"></canvas>
+
+		<script type="text/javascript">
+
+			// Gets a handle to the element with id canvasOne.
+			var canvas = document.getElementById("canvas-for-ball");
+
+			var canvasSize = {
+				width: 800,
+				height: 800
+			}
+
+			// Get a 2D context for the canvas.
+			var ctx = canvas.getContext("2d");
+
+			//change size of canvas.
+			canvas.width = canvasSize.width;
+			canvas.height = canvasSize.height;
+
+			/*
+			* Represent a 2D ball, can be draw as a normal ball or a beach ball
+			*/
+
+			class Ball {
+
+				constructor(x, y, radius, dx, dy, colour, m) {
+
+					//constructor variables
+					this.radius = radius; //radius of the ball
+					this.x = x; //x position center of the ball
+					this.y = y; //y position center of the ball
+					this.dx = dx; //vertical speed
+					this.dy = dy; // horizontal speed
+					this.slides = 7; //number of slides for beach ball
+
+
+					//other
+					this.xb; //position in last frame
+					this.yb; //position in last frame
+					this.rotation = 0; //rotation increase
+					this.isClockwise = false;  //rotation direction
+					this.rotationSpeed = 0;
+
+					//acceleration
+					this.ddy = 0;
+					this.ddx = 0;
+
+					//energy loss in wall collition with walls
+					//1 =100% means not energy lost so 0.9 mean 10% of energy lost.
+					this.k = 1;
+
+					//lab 4 colour and mass
+					this.colour = colour;
+					this.m = m;
+
+					//limits for the mid point of the ball
+					//I make this for calculate then only once.
+					this.limitsTransform = {
+
+						xLeft: this.radius,
+						xRight: canvasSize.width - this.radius,
+						yTop: this.radius,
+						yBottom: canvasSize.height - this.radius
+					};
+
+				}//constructor
+
+				//Draw ball in canvas
+				draw() {
+					//draw normal circle
+					ctx.beginPath();
+					ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+					ctx.stroke();
+
+				}//draw()
+
+				//roatate the ball by the amount parameter in isClockwise direction
+				rotate(amount) {
+
+					if (this.isClockwise) {
+						this.rotation += amount + this.rotasionSpeed;
+					} else {
+						this.rotation -= amount + this.rotationSpeed;
+					}
+				}
+
+				//draw beach ball in canvas, using the bar slides for the number of sections
+				drawBeachball() {
+					//draw normal circle
+					ctx.beginPath();
+					ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+					ctx.stroke();
+
+					//fill circle
+					ctx.fillStyle = this.colour;
+					ctx.fill();
+
+					//start angle for then increase
+					var startAngle = 2 * Math.PI + this.rotation;
+
+					//angle for increase so the ball can rotate
+					var increaseAngle = (2 * Math.PI) / this.slides;
 
 					//move cursor back to center
 					ctx.moveTo(this.x, this.y);
 
-					//increase angle
-					startAngle += increaseAngle;
-
-				}//end for loop
-
-				//stroke pat
-				ctx.stroke();
-
-				//draw small inner circle
-				ctx.beginPath();
-				ctx.arc(this.x, this.y, this.radius * 0.95, 0, 2 * Math.PI);
-				ctx.stroke();
-
-			}//end drawBeachball() 
-
-
-			/*
-			*	Move method:
-			*   Will change the position of the center of the ball using speed and aceleration
-			*	Should be call with draw for simulate movement
-			*	
-			*  Accelerated
-			* Using equation for Uniformly Accelerated Motion:
-			* v = v0 + a(t0-t)
-			* x = x0 + v0(t0-t) + (1/2)*a*(t0-t)^2
-			* where v0,x0,t0 are intial velocity, postion and time
-			* * If we consider each recursive call of the move function as "1 unit of time"
-			* for the actual call of the function :
-			* v = velocity at the end this unit of time
-			* v0 = velocty at the end of last call of the function.
-			* t0 =  last call, t  = actual so t0-t =1 since each call is one unit of time
-			* x0 = x position at call before this
-			* x = actual x postion at this call
-			* so we have:
-			* v0 = vf + a     (1)
-			* x = x0 + v0 + (1/2)*a => x += v0 + (1/2)*a      (2)
-			*/
-
-			move() {
-				this.yb = this.y;
-				this.xb = this.x;
-
-				//(2)
-				this.y += this.dy + (1 / 2) * this.ddy;
-				this.x += this.dx + (1 / 2) * this.ddx;
-
-				//change direction when reach canvas  horizontal border
-
-				//botton
-				//ball going down dy = +;
-				if (this.y >= this.limitsTransform.yBottom) {
-
-					//back if was out of camvas
-					this.y = this.limitsTransform.yBottom;
-				//	this.yb = this.y;
-					this.changeYDirection();
-
-					this.applyKy();
-
-				}
-
-				//top
-				if (this.y <= this.limitsTransform.yTop) {
-
-					//back if was out of camvas
-					this.y = this.limitsTransform.yTop
-					//this.yb = this.y;
-					this.changeYDirection();
-
-					this.applyKy();
-				}
-
-				//change direction when reach canvas  vertical border
-				//right
-				if (this.x >= this.limitsTransform.xRight) {
-
-					//back if was out of camvas
-					this.x = this.limitsTransform.xRight;
-					//this.xb = this.x;
-					this.changeXDirection();
-
-					this.applyKx();
-
-				}
-				//lest
-				if (this.x <= this.limitsTransform.xLeft) {
-
-					//back if was out of camvas
-					this.x = this.limitsTransform.xLeft;
-					//this.xb = this.x;
-					this.changeXDirection();
-
-					this.applyKx();
-				}
-
-				//(1)
-				this.dy += this.ddy;
-				this.dx += this.ddx;
-
-			}//end move()
-
-			/*
-			* Method for move back 1 frame, used when collition for avoid balls stay insede another.
-			*/
-			moveBack() {
-				this.x = this.xb;
-				this.y = this.yb;
-
-			}
-
-			//increase horizontal  speed
-			increaseXSpeed(inc) {
-
-				this.dx += inc;
-
-			}
-
-			//increase vertical speed
-			increaseYSpeed(inc) {
-
-				this.dy += inc;
-
-			}
-
-			//increase angular speed
-			increaseRotation(inc) {
-
-				this.rotationSpeed += inc;
-
-			}
-
-			//for resize
-			resize(radius) {
-				this.radius = radius;
-
-			}//resize(x,y)
-
-			//change vertical direction
-			changeYDirection() {
-
-				this.dy = this.dy * (-1);
-			}
-
-			//change horizontal direction
-			changeXDirection() {
-
-				this.dx = this.dx * (-1);
-			}
-
-			//apply  vertical kinetec energy with edges
-			applyKy() {
-
-				this.dy *= this.k;
-
-			}
-
-			//apply  horizontal kinetec energy with edges
-			applyKx() {
-
-				this.dx *= this.k;
-
-			}
-
-			//invert rotation direction
-			invertRotation() {
-
-				if (this.isClockwise) {
-
-					this.isClockwise = false;
-
-				} else {
-
-					this.isClockwise = true;
-				}
-
-			}//end of invertRotation()
-
-			changeXSpeed(amount) {
-
-				this.dx += amount;
-			}
-
-		}//end of class Ball
-
-		/*
-		* Class for control several balls.
-		* Take an array of Ball in constructor
-		*/
-
-		class BallsSpace {
-
-			// b =[]
-			constructor(b) {
-				this.balls = b;
-				this.gField = 0; ///graviatational field.
-			}
-
-			//add new ball
-			pushBall(b) {
-				this.balls.push(b);
-			}
-
-			// set gravity for all  balls
-			addGravity(g) {
-
-				for (var i = 0; i < this.balls.length; i++) {
-					this.balls[i].ddy = g;
-				}
-
-			}
-
-			//k fomr 0 to 1 represent the % of energy lost
-			addD(kLost) {
-
-				// in ball k is the total energy keeped.
-				for (var i = 0; i < this.balls.length; i++) {
-					this.balls[i].k = 1 - kLost;
-				}
-			}
-
-			//move all balls
-			moveAll() {
-				for (var i = 0; i < this.balls.length; i++) {
-					this.balls[i].rotate(0.01);
-					this.balls[i].move();
-					this.balls[i].drawBeachball();
-				}
-
-			}
-
-			//collision for all bals in the array
-			collisionAll() {
-
-				for (var i = 0; i < this.balls.length + 1; i++) {
-					for (var k = i + 1; k < this.balls.length; k++) {
-
-						this.detectCollision(this.balls[i], this.balls[k]);
+					//loop for the numbe of slides
+					for (var i = 0; i < this.slides; i++) {
+
+						//draw line
+						ctx.lineTo(this.x + this.radius * Math.cos(startAngle), this.y + this.radius * Math.sin(startAngle));
+
+						//move cursor back to center
+						ctx.moveTo(this.x, this.y);
+
+						//increase angle
+						startAngle += increaseAngle;
+
+					}//end for loop
+
+					//stroke pat
+					ctx.stroke();
+
+					//draw small inner circle
+					ctx.beginPath();
+					ctx.arc(this.x, this.y, this.radius * 0.95, 0, 2 * Math.PI);
+					ctx.stroke();
+
+				}//end drawBeachball() 
+
+
+				/*
+				*	Move method:
+				*   Will change the position of the center of the ball using speed and aceleration
+				*	Should be call with draw for simulate movement
+				*	
+				*  Accelerated
+				* Using equation for Uniformly Accelerated Motion:
+				* v = v0 + a(t0-t)
+				* x = x0 + v0(t0-t) + (1/2)*a*(t0-t)^2
+				* where v0,x0,t0 are intial velocity, postion and time
+				* * If we consider each recursive call of the move function as "1 unit of time"
+				* for the actual call of the function :
+				* v = velocity at the end this unit of time
+				* v0 = velocty at the end of last call of the function.
+				* t0 =  last call, t  = actual so t0-t =1 since each call is one unit of time
+				* x0 = x position at call before this
+				* x = actual x postion at this call
+				* so we have:
+				* v0 = vf + a     (1)
+				* x = x0 + v0 + (1/2)*a => x += v0 + (1/2)*a      (2)
+				*/
+
+				move() {
+					this.yb = this.y;
+
+					this.xb = this.x;
+
+					//(2)
+					this.y += this.dy + (1 / 2) * this.ddy;
+					this.x += this.dx + (1 / 2) * this.ddx;
+
+					//change direction when reach canvas  horizontal border
+
+					//botton
+					//ball going down dy = +;
+					if (this.y >= this.limitsTransform.yBottom) {
+
+						//back if was out of camvas
+						this.y = this.limitsTransform.yBottom;
+						this.yb = this.y;
+						this.changeYDirection();
+
+						this.applyKy();
 
 					}
+
+					//top
+					if (this.y <= this.limitsTransform.yTop) {
+
+						//back if was out of camvas
+						this.y = this.limitsTransform.yTop
+						this.yb = this.y;
+						this.changeYDirection();
+
+						this.applyKy();
+					}
+
+					//change direction when reach canvas  vertical border
+					//right
+					if (this.x >= this.limitsTransform.xRight) {
+
+						//back if was out of camvas
+						this.x = this.limitsTransform.xRight;
+						this.xb = this.x;
+						this.changeXDirection();
+
+						this.applyKx();
+
+					}
+					//lest
+					if (this.x <= this.limitsTransform.xLeft) {
+
+						//back if was out of camvas
+						this.x = this.limitsTransform.xLeft;
+						this.xb = this.x;
+						this.changeXDirection();
+
+						this.applyKx();
+					}
+
+					//(1)
+					this.dy += this.ddy;
+					this.dx += this.ddx;
+
+				}//end move()
+
+				/*
+				* Method for move back 1 frame, used when collition for avoid balls stay insede another.
+				*/
+				moveBack() {
+					this.x = this.xb;
+					this.y = this.yb;
+
 				}
-			}
+
+				//increase horizontal  speed
+				increaseXSpeed(inc) {
+
+					this.dx += inc;
+
+				}
+
+				//increase vertical speed
+				increaseYSpeed(inc) {
+
+					this.dy += inc;
+
+				}
+
+				//increase angular speed
+				increaseRotation(inc) {
+
+					this.rotationSpeed += inc;
+
+				}
+
+				//for resize
+				resize(radius) {
+					this.radius = radius;
+
+				}//resize(x,y)
+
+				//change vertical direction
+				changeYDirection() {
+
+					this.dy = this.dy * (-1);
+				}
+
+				//change horizontal direction
+				changeXDirection() {
+
+					this.dx = this.dx * (-1);
+				}
+
+				//apply  vertical kinetec energy with edges
+				applyKy() {
+
+					this.dy *= this.k;
+
+				}
+
+				//apply  horizontal kinetec energy with edges
+				applyKx() {
+
+					this.dx *= this.k;
+
+				}
+				//lost is beetwen 0 and 1 and is the % of enegy lost
+				applyLostOfEnergyWithBalls(lost) {
+					this.dy *= lost;
+					this.dx *= lost;
+				}
+
+				//invert rotation direction
+				invertRotation() {
+
+					if (this.isClockwise) {
+
+						this.isClockwise = false;
+
+					} else {
+
+						this.isClockwise = true;
+					}
+
+				}//end of invertRotation()
+
+				changeXSpeed(amount) {
+
+					this.dx += amount;
+				}
+
+			}//end of class Ball
 
 			/*
-			* Will detect if collision happens using the radius, if it does will change speed using momentun law.
+			* Class for control several balls.
+			* Take an array of Ball in constructor
 			*/
-			detectCollision(b1, b2) {
 
-				var distanceForCollision = b1.radius + b2.radius;
-				var actualDistance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
+			class BallsSpace {
 
-				//check if collision happens
-				if (actualDistance <= distanceForCollision) {
+				// b =[]
+				constructor(b) {
+					this.balls = b;
+					this.gField = 0; ///graviatational field.
+					this.isMsg = true;
+				}
 
-					console.log("collision detected"+ b1 + b2);
-					//if collition hapens we move then 1 frame back for ball inside the other bug
-					b1.moveBack();
-					b2.moveBack();
+				//add new ball
+				pushBall(b) {
+					this.balls.push(b);
+				}
 
-					//calculate x and y distance beetwen balls
-					var dx = b1.x - b2.x;
-					var dy = b1.y - b2.y;
-					var collisionAngle = Math.atan2(dy, dx);
+				// set gravity for all  balls
+				addGravity(g) {
 
+					for (var i = 0; i < this.balls.length; i++) {
+						this.balls[i].ddy = g;
+					}
 
-					//calculete total magnitud
-					var mag1 = Math.sqrt(b1.dx * b1.dx + b1.dy * b1.dy);
-					var mag2 = Math.sqrt(b2.dx * b2.dx + b2.dy * b2.dy);
+				}
 
-					//determine balls direction
-					var d1 = Math.atan2(b1.dy, b1.dx);
-					var d2 = Math.atan2(b2.dy, b2.dx);
+				//k fomr 0 to 1 represent the % of energy lost
+				addKin(kLost) {
 
-					//calculate new x and y vel
-					var dx1_new = mag1 * Math.cos(d1 - collisionAngle);
-					var dy1_new = mag1 * Math.sin(d1 - collisionAngle);
-					var dx2_new = mag2 * Math.cos(d2 - collisionAngle);
-					var dy2_new = mag2 * Math.sin(d2 - collisionAngle);
+					// in ball k is the total energy keeped.
+					for (var i = 0; i < this.balls.length; i++) {
+						this.balls[i].k = 1 - kLost;
+					}
+				}
 
-					//final x speed 
-					var dx1_final = ((b1.m - b2.m) * dx1_new + ((b2.m + b2.m) * dx2_new)) / (b1.m + b2.m);
-					var dx2_final = ((b1.m + b1.m) * dx1_new + ((b2.m - b1.m) * dx2_new)) / (b1.m + b2.m);
+				//move all balls
+				moveAll() {
+					for (var i = 0; i < this.balls.length; i++) {
+						this.balls[i].rotate(0.01);
+						this.balls[i].move();
+						this.balls[i].drawBeachball();
+					}
 
-					//y is the same
-					var dy1_final = dy1_new;
-					var dy2_final = dy2_new;
+				}
 
-					//final velocity in original 
-					b1.dx = Math.cos(collisionAngle) * dx1_final + Math.cos(collisionAngle + Math.PI / 2) * dy1_final;
-					b1.dy = Math.sin(collisionAngle) * dx1_final + Math.sin(collisionAngle + Math.PI / 2) * dy1_final;
-					b2.dy = Math.cos(collisionAngle) * dx2_final + Math.cos(collisionAngle + Math.PI / 2) * dy2_final;
-					b2.dx = Math.sin(collisionAngle) * dx2_final + Math.sin(collisionAngle + Math.PI / 2) * dy2_final;
+				//collision for all bals in the array
+				collisionAll() {
 
-					//change color
-					var temp = b1.colour;
-					b1.colour = b2.colour;
-					b2.colour = temp;
+					for (var i = 0; i < this.balls.length + 1; i++) {
+						for (var k = i + 1; k < this.balls.length; k++) {
 
+							this.detectCollision(this.balls[i], this.balls[k]);
 
-
-				}//end if
-
-			}//end function detectCollision(b1, b2)
-
-		}//end class
-
-
-		//create a new ball
-		//(x, y, radius, dx, dy,colour,m)
-		//ball for control
-		var myBall = new Ball(550, 120, 80, 0, 0, "red", 10);
-
-
-		var myBall1 = new Ball(90, 250, 40, 0, 0, "yellow", 1);
-		var myBall2 = new Ball(250, 200, 40, 0, 0, "blue", 1);
-		//myBall1.ddy = 5;
-		var ballArray = [myBall, myBall1];
-		var s = new BallsSpace(ballArray);
-		s.pushBall(myBall2);
-
-
-		var myBall3 = new Ball(500, 500, 40, 0, 0, "green", 1);
-		s.pushBall(myBall3);
-		/*
-		for(var i =0;i<700;i+=10)
-		{for(var k=0;k<700;k+=10){
-			var myBall4 = new Ball(i, k, 1, 0, 0, "black", 1);
-			s.pushBall(myBall4);
-		}
-		}*/
-		s.addD(0.1);
-		var gActual = 0;
-		s.addGravity(gActual);
-
-		//funtion for call recursively
-		function repeatBallBounce() {
-
-			//clear canvas
-			ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-
-			//move all balls 
-			s.moveAll();
-
-			//collison of all balls
-			s.collisionAll();
-
-			//recursive call
-			window.requestAnimationFrame(repeatBallBounce);
-
-		}//function repeatBallBounce()
-
-		//start recursive call
-		repeatBallBounce();
+						}
+					}
+				}
 
 
 
-		//key event for myBall
-		$(document.body).on('keydown', function (e) {
 
-			switch (e.which) {
 
-				// left 
-				case 37:
-					myBall.increaseXSpeed(-1);
-					break;
+				/*
+				* Will detect if collision happens using the radius, if it does will change speed using momentun law.
+				*/
+				detectCollision(b1, b2) {
 
-				//right
-				case 39:
-					myBall.increaseXSpeed(1);
-					break;
 
-				// key up pressed
-				case 38:
-					myBall.increaseYSpeed(-2);
-					break;
+					var distanceForCollision = b1.radius + b2.radius;
+					var actualDistance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
 
-				// down 
-				case 40:
-					myBall.increaseYSpeed(2);
-					break;
+					//check if collision happens
+					if (actualDistance <= distanceForCollision) {
 
-				//r increse rotation to left
-				case 82://left
-					myBall.increaseRotation(0.01);
+						if (this.isMsg) {
+							ctx.font = "50px Arial";
+							ctx.fillText("Collision Detected", b1.x, b1.y);
+						}
 
-					break;
-				//t increse rotation to right
-				case 84: //right
-					myBall.increaseRotation(-0.01);
-					break;
 
-			}//switch
+						console.log("collision detected" + b1 + b2);
 
-		});//$
 
-		//mouse event for myBall
-		var canvasPosition = {
-			x: canvas.offsetLeft,
-			y: canvas.offsetTop
-		}
-		canvas.addEventListener("click", function (event) {
+						//calculate x and y distance beetwen balls
+						var dx = b1.x - b2.x;
+						var dy = b1.y - b2.y;
+						var collisionAngle = Math.atan2(dy, dx);
 
-			var mouse = {
-				x: event.pageX - canvasPosition.x,
-				y: event.pageY - canvasPosition.y
+						//calculete total magnitud
+						var mag1 = Math.sqrt(b1.dx * b1.dx + b1.dy * b1.dy);
+						var mag2 = Math.sqrt(b2.dx * b2.dx + b2.dy * b2.dy);
+
+						//determine balls direction
+						var d1 = Math.atan2(b1.dy, b1.dx);
+						var d2 = Math.atan2(b2.dy, b2.dx);
+
+						//calculate new x and y vel
+						var dx1_new = mag1 * Math.cos(d1 - collisionAngle);
+						var dy1_new = mag1 * Math.sin(d1 - collisionAngle);
+						var dx2_new = mag2 * Math.cos(d2 - collisionAngle);
+						var dy2_new = mag2 * Math.sin(d2 - collisionAngle);
+
+						//final x speed 
+						var dx1_final = ((b1.m - b2.m) * dx1_new + ((b2.m + b2.m) * dx2_new)) / (b1.m + b2.m);
+						var dx2_final = ((b1.m + b1.m) * dx1_new + ((b2.m - b1.m) * dx2_new)) / (b1.m + b2.m);
+
+						//y is the same
+						var dy1_final = dy1_new;
+						var dy2_final = dy2_new;
+
+						//final velocity in original 
+						b1.dx = Math.cos(collisionAngle) * dx1_final + Math.cos(collisionAngle + Math.PI / 2) * dy1_final;
+						b1.dy = Math.sin(collisionAngle) * dx1_final + Math.sin(collisionAngle + Math.PI / 2) * dy1_final;
+						b2.dy = Math.cos(collisionAngle) * dx2_final + Math.cos(collisionAngle + Math.PI / 2) * dy2_final;
+						b2.dx = Math.sin(collisionAngle) * dx2_final + Math.sin(collisionAngle + Math.PI / 2) * dy2_final;
+
+
+						//add lost of energy
+						b1.applyLostOfEnergyWithBalls(0.9);
+						b2.applyLostOfEnergyWithBalls(0.9);
+
+						//if collition hapens we move then 1 frame back for ball inside the other bug
+						b1.moveBack();
+						b2.moveBack();
+
+						//change color
+						var temp = b1.colour;
+						b1.colour = b2.colour;
+						b2.colour = temp;
+
+					}//end if
+
+				}//end function detectCollision(b1, b2)
+
+			}//end class
+
+
+			//create balls and add to space
+			//(x, y, radius, dx, dy,colour,m)
+			//ball for control orange
+			var myBall = new Ball(550, 120, 80, 0, 0, "orange", 2);
+
+
+			var myBall1 = new Ball(90, 250, 40, 0, 0, "yellow", 1);
+			var myBall2 = new Ball(250, 200, 40, 0, 0, "blue", 1);
+			//myBall1.ddy = 5;
+			var ballArray = [myBall, myBall1];
+			var s = new BallsSpace(ballArray);
+			s.pushBall(myBall2);
+			var myBall3 = new Ball(700, 500, 40, 0, 0, "green", 1);
+			s.pushBall(myBall3);
+
+
+			//set gravity to 0
+			var gActual = 0;
+			s.addGravity(gActual);
+
+			var kActual = 0.1;
+			s.addKin(kActual);
+
+			//funtion for call recursively
+			function repeatBallBounce() {
+
+				//clear canvas
+				ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+
+				//move all balls 
+				s.moveAll();
+
+				//collison of all balls
+				s.collisionAll();
+
+				//recursive call
+				window.requestAnimationFrame(repeatBallBounce);
+
+			}//function repeatBallBounce()
+
+			//start recursive call
+			repeatBallBounce();
+
+			/* Control ball by keyboard input
+			*/
+			//key event for myBall
+			$(document.body).on('keydown', function (e) {
+
+				switch (e.which) {
+
+					// left 
+					case 37:
+						myBall.increaseXSpeed(-1);
+						break;
+
+					//right
+					case 39:
+						myBall.increaseXSpeed(1);
+						break;
+
+					// key up pressed
+					case 38:
+						myBall.increaseYSpeed(-2);
+						break;
+
+					// down 
+					case 40:
+						myBall.increaseYSpeed(2);
+						break;
+
+					//r increse rotation to left
+					case 82://left
+						myBall.increaseRotation(0.01);
+
+						break;
+					//t increse rotation to right
+					case 84: //right
+						myBall.increaseRotation(-0.01);
+						break;
+
+				}//switch
+
+			});//$
+
+			//mouse event for myBall
+			var canvasPosition = {
+				x: canvas.offsetLeft,
+				y: canvas.offsetTop
 			}
+			canvas.addEventListener("click", function (event) {
 
-			myBall.x = mouse.x;
-			myBall.y = mouse.y;
-			myBall.draw();
+				var mouse = {
+					x: event.pageX - canvasPosition.x,
+					y: event.pageY - canvasPosition.y
+				}
 
-		});
+				myBall.x = mouse.x;
+				myBall.y = mouse.y;
+				myBall.draw();
 
-
-
-		//ui
-
-		function showGravity() {
-			$("h2.gravity").html("Gravity = <b>" + gActual + "</b>");
-		}
-		showGravity();
-		$(document).ready(function () {
-			$("button").click(function () {
-
-				gActual = parseFloat($("#newG").val());
-
-				s.addGravity(gActual);
-				showGravity();
 			});
-		});
 
-	</script>
 
-</body>
+
+			/*	Top interface: gravity field, throw ball.
+			*/
+
+			function showGravity() {
+				$("h2.gravity").html("Gravity = <b>" + gActual + "</b>");
+			}
+			showGravity();
+			$(document).ready(function () {
+				$("#gButton").click(function () {
+
+					gActual = parseFloat($("#newG").val());
+
+					s.addGravity(gActual);
+					showGravity();
+				});
+			});
+
+			var colours = ["violet", "indigo", "lightblue", "red", "darkgreen", "purple", "brown"];
+			var count = 0;
+			$(document).ready(function () {
+				$("#throwBall").click(function () {
+					if (count < 7) {
+						var angle = parseFloat($("#angle").val());
+						var speed = parseFloat($("#speed").val());
+						var xSpeed = speed * Math.cos((angle * Math.PI) / 180);
+						var ySpeed = speed * Math.sin((angle * Math.PI) / 180);
+						var TempBall = new Ball(canvasSize.width / 2, canvasSize.height - 21, 40, xSpeed, -ySpeed, colours[count], 1);
+						TempBall.ddy = gActual;
+						count++;
+						s.pushBall(TempBall);
+					} else {
+						count = 0;
+					}
+
+				});
+			});
+			$(document).ready(function () {
+				$("#msg").click(function () {
+					if (s.isMsg == false) {
+						s.isMsg = true;
+					} else {
+						s.isMsg = false;
+					}
+				});
+			});
+		</script>
+
+	</body>
 
 </html>
