@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>D3.js Demo</title>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <meta charset="UTF-8">
+    <style type="text/css"></style>
+</head>
+
+<body>
+    <script type="text/javascript">
+        var Data;
+        $.getJSON("https://jsonblob.com/api/60b035d5-d579-11e8-a295-3724bafc7173", function (data) {
+            Data = data;
+            console.log(Data[1].Date);
+
+            plotCurrencyData();
+
+        })
+
+        function plotCurrencyData() {
+           
+            var margin = {top:50,right:50,bottom:50,left:50};
+            var canvasSize = {width :900,height:670};
+            var width = canvasSize.width - margin.left-margin.right;
+            var height = canvasSize.height - margin.top-margin.bottom;
+            var svg = d3.select("body").append("svg").attr("width", canvasSize.width ).attr("height", canvasSize.height)
+                .append("g").attr("transform", "translate("+margin.left+","+margin.bottom+")");
+
+            var parseDate = d3.timeParse("%d/%m/%Y");
+
+            //x
+            var x = d3.scaleTime().domain(d3.extent(Data, function (d) {
+
+
+                return parseDate(d["Date"]);
+            })).range([0, width]);
+
+            var xAxis = d3.axisBottom(x).ticks(10);
+
+            //y
+            var y = d3.scaleLinear().domain(d3.extent(Data, function (d) {
+                return d["GBP/EUR"]
+            })).range([height, 0]);
+
+            var yAxis = d3.axisLeft(y).ticks(5);
+
+            //line
+            var valueline = d3.line()
+                .x(function (d) { return x(parseDate(d["Date"])); })
+                .y(function (d) { return y(d["GBP/EUR"]); });
+
+
+            svg.append("g").attr("class", "x-axis").call(xAxis).attr("transform", "translate(0," +(height)+ ")");
+            
+
+            svg.append("g").attr("class", "y-axis").call(yAxis);
+
+            svg.append("path").attr("d", valueline(Data)).attr("stroke","blue").attr("fill","none");
+
+
+
+        }
+    </script>
+</body>
+
+</html>
