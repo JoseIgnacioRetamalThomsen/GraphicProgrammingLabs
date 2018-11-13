@@ -13,39 +13,123 @@
     <script src="https://ajax.googleapis.com/ajax/libs/threejs/r84/three.min.js"></script>
     <script type="text/javascript">
 
+		//scene
         var scene = new THREE.Scene();
-        var camera = new THREE.PerspectiveCamera(80, 1200 / 800, 0.1, 1000);// window.innerWidth / window.innerHeight, 0.1, 1000);
-
+		
+		//camera
+		var camera = new THREE.PerspectiveCamera(80, 1200 / 800, 0.1, 1000);// window.innerWidth / window.innerHeight, 0.1, 1000);
+		
+		//set position
+		camera.position.z = 5;
+		camera.position.y =0;
+		camera.position.x =0;
+		
+		//renderer
         var renderer = new THREE.WebGLRenderer();
-        renderer.setSize(1200, 800);//window.innerWidth, window.innerHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.shadowMap.enabled=true;
+		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
-
-        var geometry = new THREE.SphereGeometry(1, 10, 10);
+		
+		//sphere
+        var geometry = new THREE.SphereGeometry(0.5, 10, 10);
+		//sphere material
         var material = new THREE.MeshLambertMaterial({ color: 0xffff00 });
-        material.castShadow =true;
-        material.wireframe = false;
-        var sphere = new THREE.Mesh(geometry, material);
-        scene.add(sphere);
+		//shadows
+		material.castShadow =true;
+        //wireframe
+		material.wireframe = false;
+		//create sphere
+		var sphere = new THREE.Mesh(geometry, material);
+		
+		// wireframe
+		var geo = new THREE.EdgesGeometry( sphere.geometry ); // or WireframeGeometry
+		var mat = new THREE.LineBasicMaterial( { color: "red", linewidth: 2 } );
+		var wireframe = new THREE.LineSegments( geo, mat );
+		sphere.add(wireframe);
+		
+		sphere.castShadow =true;
+        //add to scene
+		scene.add(sphere);
 
-        camera.position.z = 5
-
+        
+		//light
         var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        directionalLight.position.set(0, 1, 2);
+        directionalLight.position.set(-1, 1, 1);
+		directionalLight.castShadow = true;
         scene.add(directionalLight);
 
+		
+		
+		//add bottom plane 
+		
         //plane
-        var geometry = new THREE.PlaneGeometry(5, 5);
-        var material1 = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        var geometry = new THREE.PlaneGeometry(10, 10);
+        var material1 = new THREE.MeshLambertMaterial({ color: "green", side: THREE.DoubleSide });
         material1.wireframe = false;
-        material1.castShadow =true;
-        var plane = new THREE.Mesh(geometry, material1);
+        
+		material1.receiveShadow = true;
+		
+		
+        //back 
+		materialBack = new THREE.MeshLambertMaterial({ color: "red", side: THREE.DoubleSide });
+		materialBack.receiveShadow=true;
+		var planeBack = new THREE.Mesh(geometry,materialBack );
+		planeBack.position.x=0;
+		planeBack.position.y=0;
+		planeBack.position.z=-5;
+		planeBack.receiveShadow = true;
+		
+        var planeBottom = new THREE.Mesh(geometry, material1);
         //plane.rotateZ(Math.PI/2);
         //plane.rotateY(Math.PI/2);
-        plane.rotation.x = Math.PI / 12;
-        plane.rotation.y = Math.PI / 12;
-        plane.position.x = -3;
-
-        scene.add(plane);
+       // plane.rotation.x = Math.PI / 12;
+        planeBottom.rotation.x = -Math.PI/2 ;
+        planeBottom.position.y = -5;
+		planeBottom.receiveShadow = true;
+	
+	//top
+     var planeTop = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: "purple", side: THREE.DoubleSide }));
+        //plane.rotateZ(Math.PI/2);
+        //plane.rotateY(Math.PI/2);
+       // plane.rotation.x = Math.PI / 12;
+        planeTop.rotation.x = -Math.PI/2 ;
+        planeTop.position.y = 5;	
+		planeTop.receiveShadow = true;
+		
+		//right
+		materialRight = new THREE.MeshLambertMaterial({ color: "yellow", side: THREE.DoubleSide });
+		
+		var planeRight = new THREE.Mesh(geometry, materialRight);
+		planeRight.rotation.y = -Math.PI/2;
+		planeRight.position.x = -5;
+		planeRight.position.z=0;
+		planeRight.position.y = 0;
+		planeRight.receiveShadow = true;
+		
+		
+		//left
+		materialLeft = new THREE.MeshLambertMaterial({ color: "yellow", side: THREE.DoubleSide });
+		
+		var planeLeft = new THREE.Mesh(geometry, materialLeft);
+		planeLeft.rotation.y = -Math.PI/2;
+		planeLeft.position.x = 5;
+		planeLeft.position.z=0;
+		planeLeft.position.y = 0;
+		planeLeft.receiveShadow = true;
+		
+		//front
+		materialFront = new THREE.MeshLambertMaterial({ color: "brown", side: THREE.DoubleSide });
+		
+		var planeFront = new THREE.Mesh(geometry, materialFront);
+		planeFront.position.z =5;
+		
+		scene.add(planeFront);
+		scene.add(planeLeft);
+		scene.add(planeBack);
+        scene.add(planeBottom);
+        scene.add(planeRight);
+		scene.add(planeTop)
 
         //spotlight
         var spotLight = new THREE.SpotLight(0xffffff);
@@ -56,8 +140,12 @@
         var spotLightHelper = new THREE.SpotLightHelper(spotLight);
         scene.add(spotLightHelper);
 
-        var xPos = 0, yPos = 0, zPos = 0;
-        var verticalSpeed = 0.1;
+		var r =0.5;
+		
+        var xPos = 0, yPos = 0, zPos = 2;
+        var verticalSpeed = 0.05;
+		var ySpeed =0.03;
+		var zSpeed = 0.07;
 
         sphere.position.x = xPos;
         sphere.position.y = yPos;
@@ -72,19 +160,38 @@
             sphere.rotateX(Math.PI / 180);
             sphere.rotateY(Math.PI / 180);
 
-            console.log(sphere.position.x);
-            if (sphere.position.x >= 5) {
+            //bouncing
+			//x
+            if (sphere.position.x + r >= 5) {
                 verticalSpeed = -1 * verticalSpeed;
             }
-            if (sphere.position.x <= -5) {
+            if (sphere.position.x -r <= -5) {
                 verticalSpeed = -1 * verticalSpeed;
+            }
+			//y
+			 if (sphere.position.y + r >= 5) {
+                ySpeed = -1 * ySpeed;
+            }
+            if (sphere.position.y -r <= -5) {
+                ySpeed = -1 * ySpeed;
+            }
+			//z
+			 if (sphere.position.z + r >= 5) {
+                zSpeed = -1 * zSpeed;
+            }
+            if (sphere.position.z -r <= -5) {
+                zSpeed = -1 * zSpeed;
             }
 
             sphere.position.x += verticalSpeed;
+			sphere.position.y += ySpeed;
+			sphere.position.z += zSpeed;
 
             material.color.setHex(hex);
             hex--;
 
+			//camera.lookAt(sphere.position);
+			
             renderer.render(scene, camera);
         }
         animate();
