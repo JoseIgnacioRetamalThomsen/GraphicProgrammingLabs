@@ -27,6 +27,8 @@
 		//renderer
         var renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
+		
+		//add shadows to renderer
 		renderer.shadowMap.enabled=true;
 		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
@@ -49,6 +51,7 @@
 		sphere.add(wireframe);
 		
 		sphere.castShadow =true;
+		sphere.receiveShadow = true;
         //add to scene
 		scene.add(sphere);
 
@@ -62,22 +65,26 @@
 		
 		
 		//add bottom plane 
+		var planeWidh =10;
+		var planeHeight =10;
+		var center = {x:0,y:0,z:0};
 		
         //plane
-        var geometry = new THREE.PlaneGeometry(10, 10);
+        var geometry = new THREE.PlaneGeometry(planeWidh, planeHeight);
+		
         var material1 = new THREE.MeshLambertMaterial({ color: "green", side: THREE.DoubleSide });
         material1.wireframe = false;
         
-		material1.receiveShadow = true;
+		//material1.receiveShadow = true;
 		
 		
         //back 
 		materialBack = new THREE.MeshLambertMaterial({ color: "red", side: THREE.DoubleSide });
-		materialBack.receiveShadow=true;
+		//materialBack.receiveShadow=true;
 		var planeBack = new THREE.Mesh(geometry,materialBack );
-		planeBack.position.x=0;
-		planeBack.position.y=0;
-		planeBack.position.z=-5;
+		planeBack.position.x=center.x;
+		planeBack.position.y=center.y;
+		planeBack.position.z=center.z-(planeWidh/2);
 		planeBack.receiveShadow = true;
 		
         var planeBottom = new THREE.Mesh(geometry, material1);
@@ -85,7 +92,7 @@
         //plane.rotateY(Math.PI/2);
        // plane.rotation.x = Math.PI / 12;
         planeBottom.rotation.x = -Math.PI/2 ;
-        planeBottom.position.y = -5;
+        planeBottom.position.y = center.y-(planeWidh/2);
 		planeBottom.receiveShadow = true;
 	
 	//top
@@ -97,7 +104,7 @@
         planeTop.position.y = 5;	
 		planeTop.receiveShadow = true;
 		
-		//right
+		//left
 		materialRight = new THREE.MeshLambertMaterial({ color: "yellow", side: THREE.DoubleSide });
 		
 		var planeRight = new THREE.Mesh(geometry, materialRight);
@@ -108,15 +115,15 @@
 		planeRight.receiveShadow = true;
 		
 		
-		//left
-		materialLeft = new THREE.MeshLambertMaterial({ color: "yellow", side: THREE.DoubleSide });
+		//righ
+		materialR = new THREE.MeshLambertMaterial({ color: "white", side: THREE.DoubleSide });
 		
-		var planeLeft = new THREE.Mesh(geometry, materialLeft);
-		planeLeft.rotation.y = -Math.PI/2;
-		planeLeft.position.x = 5;
-		planeLeft.position.z=0;
-		planeLeft.position.y = 0;
-		planeLeft.receiveShadow = true;
+		var planeR = new THREE.Mesh(geometry, materialR);
+		planeR.rotation.y = -Math.PI/2;
+		planeR.position.x = 5;
+		planeR.position.z=0;
+		planeR.position.y = 0;
+		planeR.receiveShadow = true;
 		
 		//front
 		materialFront = new THREE.MeshLambertMaterial({ color: "brown", side: THREE.DoubleSide });
@@ -125,7 +132,7 @@
 		planeFront.position.z =5;
 		
 		scene.add(planeFront);
-		scene.add(planeLeft);
+		scene.add(planeR);
 		scene.add(planeBack);
         scene.add(planeBottom);
         scene.add(planeRight);
@@ -190,7 +197,7 @@
             material.color.setHex(hex);
             hex--;
 
-			//camera.lookAt(sphere.position);
+			camera.lookAt(sphere.position);
 			
             renderer.render(scene, camera);
         }
