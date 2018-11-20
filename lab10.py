@@ -11,8 +11,8 @@ img = cv2.imread('GMIT1.jpg',)
 grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 #display both images
-nrows=3
-ncols =3
+nrows=4
+ncols =4
 
 #add normal image
 plt.subplot(nrows, ncols,1),plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), cmap = 'gray')
@@ -134,7 +134,87 @@ matches = sorted(matches, key = lambda x:x.distance)
 #img3 = cv2.drawMatches(img1,kp1,img2,kp2,matches[:10], flags=2)
 img3 = drawMatches(img1,kp1,img2,kp2,matches[:40])
 
-plt.imshow(img3),plt.show()
+#add img to plot
+plt.subplot(nrows, ncols,7),plt.imshow(cv2.cvtColor(img3, cv2.COLOR_BGR2RGB), cmap = 'gray')
+plt.title("Sift")
+plt.xticks([])
+plt.yticks([])
+
+##FLANN
+imgFlann1 = cv2.imread('GMIT1.jpg',0)          
+imgFlann2 = cv2.imread('GMIT2.jpg',0) 
+
+# Initiate SIFT detector
+siftFlann = cv2.SIFT()
+
+# find the keypoints and descriptors with SIFT
+kpFlann1, desFlann1 = sift.detectAndCompute(imgFlann1,None)
+kpFlann2, desFlann2 = sift.detectAndCompute(imgFlann2,None)
+
+# FLANN parameters
+FLANN_INDEX_KDTREE = 0
+index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+search_params = dict(checks=50)   # or pass empty dictionary
+
+flann = cv2.FlannBasedMatcher(index_params,search_params)
+
+matches1 = flann.knnMatch(desFlann1,desFlann2,k=2)
+
+
+
+# Need to draw only good matches, so create a mask
+matchesMask1 = [[0,0] for i in xrange(len(matches1))]
+
+# ratio test as per Lowe's paper
+for i,(m,n) in enumerate(matches1):
+    if m.distance < 0.7*n.distance:
+        matchesMask1[i]=[1,0]
+
+draw_params = dict(matchColor = (0,255,0),
+                   singlePointColor = (255,0,0),
+                   matchesMask = matchesMask1,
+                   flags = 0)
+
+matches1D = []
+count = 0
+for i in range(len(matchesMask1)):   
+    for j in range(len(matchesMask1[i])):   
+        matches1D.append(m)
+        
+##for m in matches1:
+    ##matches1D.append(m)
+
+
+    
+
+#imgFlann3 = cv2.drawMatchesKnn(imgFlann1,kpFlann1,imgFlann2,kpFlann2,matches,None,**draw_params)
+imgFlann3 = drawMatches(imgFlann1,kpFlann1,imgFlann2,kpFlann2,matches1D)
+
+#plot
+plt.subplot(nrows, ncols,8),plt.imshow(cv2.cvtColor(imgFlann3, cv2.COLOR_BGR2RGB), cmap = 'gray')
+plt.title("Flann")
+plt.xticks([])
+plt.yticks([])
+
+
+imgRGB = cv2.imread('GMIT1.jpg',0) 
+
+#cv2.CvtColor(src, dst, code)(imgRGB, imghSV, CV_RGB2GRAY)
+imgR = imgRGB
+imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+plt.subplot(nrows, ncols,8),plt.imshow(imgHSV, cmap = 'gray')
+plt.title("HSV")
+plt.xticks([])
+plt.yticks([])
+
+
+imgHSV1 = cv2.cvtColor(img, cv2.COLOR_BGR2HSV,3)
+
+plt.subplot(nrows, ncols,9),plt.imshow(imgHSV1, cmap = 'gray')
+plt.title("HSV")
+plt.xticks([])
+plt.yticks([])
 
 #show and wait 
 plt.show()
