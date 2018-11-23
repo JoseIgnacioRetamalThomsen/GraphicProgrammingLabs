@@ -2,23 +2,22 @@ import cv2
 import numpy as np 
 from matplotlib import pyplot as plt
 
-img = cv2.imread('studentPicture.jpg',) 
+#get image
+img = cv2.imread('car.jpg',) 
 
-
-
-
+#convert to gray scale
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-
-
-nrows=3
+#set rows and columns for subplot
+nrows=4
 ncols =3
 
-#add normal image
+#add normal image to subplot
 plt.subplot(nrows, ncols,1),plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), cmap = 'gray')
 plt.title('Original')
 plt.xticks([])
 plt.yticks([]) 
+
 #add grayscale image
 plt.subplot(nrows, ncols,2),plt.imshow(gray, cmap = 'gray')
 plt.title("GrayScale")
@@ -68,14 +67,14 @@ doubleSobel = sobelHorizontal + sobelVertical
 
 #double
 plt.subplot(nrows, ncols,7),plt.imshow(doubleSobel, cmap = 'gray')
-plt.title("2 sobel")
+plt.title("2 sobel sum")
 plt.xticks([])
 plt.yticks([])
 
 #canny
-cannyThreshold = 50
-cannyParam2  = 150
-canny = cv2.Canny(gray,cannyThreshold,cannyParam2)
+cannyThreshold = 35
+cannyParam2  = 70
+canny = cv2.Canny(blur1,cannyThreshold,cannyParam2)
  
 #show
 plt.subplot(nrows, ncols,8),plt.imshow(canny, cmap = 'gray')
@@ -83,14 +82,14 @@ plt.title("canny 100-200")
 plt.xticks([])
 plt.yticks([])
 
-#treshold
-tresshold = 120
 
-b = doubleSobel
-r=0
-c=0
 
+
+#sobel teshold 
 height, width = doubleSobel.shape
+
+#treshold
+tresshold = 100
 
 for x in range(0,height):
     for y in range(0,width):
@@ -104,7 +103,34 @@ for x in range(0,height):
 
 #show
 plt.subplot(nrows, ncols,9),plt.imshow(doubleSobel, cmap = 'gray')
-plt.title("canny 100-200")
+plt.title("sobel treshold")
+plt.xticks([])
+plt.yticks([])
+
+#manual edge detection
+#get image
+imgM = cv2.imread('car.jpg',) 
+
+#convert to gray scale
+grayM = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+i, j = grayM.shape
+
+for x in range(0,i-2):
+    for y in range(0,j-2):
+        if ( ((grayM[x][y] - grayM[x+1][y])>80)  & ((grayM[x][y] - grayM[x+2][y])>80)  & ((grayM[x][y] - grayM[x-1][y])>80) & ((grayM[x][y] - grayM[x][y+1])>80) & ((grayM[x][y] - grayM[x][y-1])>80) ):
+            grayM[x][y]=255
+        else:
+            grayM[x][y]=0
+
+imgM = cv2.imread('car.jpg',) 
+
+
+
+manualEdge = grayM 
+#show
+plt.subplot(nrows, ncols,10),plt.imshow(manualEdge, cmap = 'gray')
+plt.title("sobel treshold")
 plt.xticks([])
 plt.yticks([])
 

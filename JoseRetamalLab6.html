@@ -11,56 +11,79 @@
 
 <body>
     <script type="text/javascript">
-        var Data;
+
+        //get data from jsonblob
         $.getJSON("https://jsonblob.com/api/60b035d5-d579-11e8-a295-3724bafc7173", function (data) {
-            Data = data;
-            console.log(Data[1].Date);
 
-            plotCurrencyData();
+            //log the data
+            console.log(data);
 
-        })
+            //cal plotCurrencyData with data
+            plotCurrencyData(data);
 
-        function plotCurrencyData() {
-           
-            var margin = {top:50,right:50,bottom:50,left:50};
-            var canvasSize = {width :900,height:670};
-            var width = canvasSize.width - margin.left-margin.right;
-            var height = canvasSize.height - margin.top-margin.bottom;
-            var svg = d3.select("body").append("svg").attr("width", canvasSize.width ).attr("height", canvasSize.height)
-                .append("g").attr("transform", "translate("+margin.left+","+margin.bottom+")");
+        })//end of read data
 
+        //take array of data then plot the graphic
+        function plotCurrencyData(data) {
+
+            //set boundaries
+            var margin = { top: 50, right: 50, bottom: 50, left: 100 };
+            var canvasSize = { width: 900, height: 670 };
+            var width = canvasSize.width - margin.left - margin.right;
+            var height = canvasSize.height - margin.top - margin.bottom;
+
+            //create svg
+            var svg = d3.select("body").append("svg").attr("width", canvasSize.width).attr("height", canvasSize.height)
+            .call(d3.zoom().on("zoom", function () {
+                    console.log("s");
+                    svg.attr("transform", d3.event.transform);
+                })).append("g").attr("transform", "translate(" + margin.left + "," + margin.bottom + ")");
+
+             
+               // 
+
+            //create a date parse
             var parseDate = d3.timeParse("%d/%m/%Y");
 
-            //x
-            var x = d3.scaleTime().domain(d3.extent(Data, function (d) {
-
+            //set x data axis parsing date data
+            var x = d3.scaleTime().domain(d3.extent(data, function (d) {
 
                 return parseDate(d["Date"]);
+
             })).range([0, width]);
 
+            //set x data into x axis and set ticks
             var xAxis = d3.axisBottom(x).ticks(10);
 
-            //y
-            var y = d3.scaleLinear().domain(d3.extent(Data, function (d) {
+            //set y data , parse value 
+            var y = d3.scaleLinear().domain(d3.extent(data, function (d) {
                 return d["GBP/EUR"]
             })).range([height, 0]);
 
+            //set y data and set ticks
             var yAxis = d3.axisLeft(y).ticks(5);
 
-            //line
+            //create the line
             var valueline = d3.line()
                 .x(function (d) { return x(parseDate(d["Date"])); })
                 .y(function (d) { return y(d["GBP/EUR"]); });
 
 
-            svg.append("g").attr("class", "x-axis").call(xAxis).attr("transform", "translate(0," +(height)+ ")");
-            
+            //append x axis to svg
+            svg.append("g").attr("class", "x-axis").call(xAxis).attr("transform", "translate(0," + (height) + ")");
 
+            //append y axis to svg
             svg.append("g").attr("class", "y-axis").call(yAxis);
 
-            svg.append("path").attr("d", valueline(Data)).attr("stroke","blue").attr("fill","none");
+            //append value line
+            svg.append("path").attr("d", valueline(data)).attr("stroke", "blue").attr("fill", "none");
 
+            //add labels
+            svg.append("text").attr("x", -50).attr("y", 300).style("text-anchor", "middle").text("Value");
+            //add labels
+            svg.append("text").attr("x", (canvasSize.width / 2) - 50).attr("y", canvasSize.height - 50).style("text-anchor", "middle").text("Date");
 
+          
 
         }
     </script>

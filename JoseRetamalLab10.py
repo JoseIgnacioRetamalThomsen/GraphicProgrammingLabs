@@ -10,8 +10,8 @@ img = cv2.imread('GMIT1.jpg',)
 #create gray scale image from img
 grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-#display both images
-nrows=4
+#plot boundaries
+nrows=3
 ncols =4
 
 #add normal image
@@ -35,6 +35,7 @@ blockSize= 2
 aperture_size = 3
 k = 0.04
 
+#perform harris
 dst = cv2.cornerHarris(harrisImg, blockSize, aperture_size, k)
 
 #add haris to display
@@ -44,10 +45,6 @@ plt.xticks([])
 plt.yticks([]) 
 
 ##draw circles
-
-
-
-
 B=100
 G =10
 R =200
@@ -110,10 +107,7 @@ plt.yticks([])
 img1 = cv2.imread('GMIT1.jpg',0)
 img2 = cv2.imread('GMIT2.jpg',0)
 
-print(len(img1))
-print(len(img1[0]))
-print(len(img2))
-print(len(img2[0]))
+
 # Initiate SIFT detector
 orb = cv2.ORB()
 
@@ -196,23 +190,37 @@ plt.title("Flann")
 plt.xticks([])
 plt.yticks([])
 
-
+#read image for separate in HSV
 imgRGB = cv2.imread('GMIT1.jpg',0) 
 
-#cv2.CvtColor(src, dst, code)(imgRGB, imghSV, CV_RGB2GRAY)
-imgR = imgRGB
+#trabsfor to HSV
 imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+##add to pplot
 plt.subplot(nrows, ncols,8),plt.imshow(imgHSV, cmap = 'gray')
 plt.title("HSV")
 plt.xticks([])
 plt.yticks([])
 
+#separete image in chane;s
+imgHSV1 = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+h,s,v = cv2.split(imgHSV1)
 
-imgHSV1 = cv2.cvtColor(img, cv2.COLOR_BGR2HSV,3)
+#add H chanel
+plt.subplot(nrows, ncols,9),plt.imshow(h)
+plt.title("HSV H")
+plt.xticks([])
+plt.yticks([])
 
-plt.subplot(nrows, ncols,9),plt.imshow(imgHSV1, cmap = 'gray')
-plt.title("HSV")
+#add S chanel
+plt.subplot(nrows, ncols,10),plt.imshow(s, cmap = 'gray')
+plt.title("HSV S")
+plt.xticks([])
+plt.yticks([])
+
+#add v chanel
+plt.subplot(nrows, ncols,11),plt.imshow(v, cmap = 'gray')
+plt.title("HSV V")
 plt.xticks([])
 plt.yticks([])
 

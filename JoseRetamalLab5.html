@@ -10,10 +10,11 @@
 
 <body>
 
+    <!--Import js from google api-->
     <script src="https://ajax.googleapis.com/ajax/libs/threejs/r84/three.min.js"></script>
     <script type="text/javascript">
 
-		//scene
+		//create scene
         var scene = new THREE.Scene();
 		
 		//camera
@@ -24,6 +25,12 @@
 		camera.position.y =0;
 		camera.position.x =0;
 		
+        
+        //L5:camera helper 
+        var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        var helper = new THREE.CameraHelper( camera );
+        scene.add( helper );
+
 		//renderer
         var renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -35,8 +42,8 @@
 		
 		//sphere
         var geometry = new THREE.SphereGeometry(0.5, 10, 10);
-		//sphere material
-        var material = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+		// L5:Lambert Material, sphere material,
+        var material = new THREE.MeshLambertMaterial({ color: "green" });
 		//shadows
 		material.castShadow =true;
         //wireframe
@@ -44,7 +51,7 @@
 		//create sphere
 		var sphere = new THREE.Mesh(geometry, material);
 		
-		// wireframe
+		// L5: Wireframe on top of lambert, wireframe
 		var geo = new THREE.EdgesGeometry( sphere.geometry ); // or WireframeGeometry
 		var mat = new THREE.LineBasicMaterial( { color: "red", linewidth: 2 } );
 		var wireframe = new THREE.LineSegments( geo, mat );
@@ -88,19 +95,13 @@
 		planeBack.receiveShadow = true;
 		
         var planeBottom = new THREE.Mesh(geometry, material1);
-        //plane.rotateZ(Math.PI/2);
-        //plane.rotateY(Math.PI/2);
-       // plane.rotation.x = Math.PI / 12;
-        planeBottom.rotation.x = -Math.PI/2 ;
+             planeBottom.rotation.x = -Math.PI/2 ;
         planeBottom.position.y = center.y-(planeWidh/2);
 		planeBottom.receiveShadow = true;
 	
 	//top
      var planeTop = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: "purple", side: THREE.DoubleSide }));
-        //plane.rotateZ(Math.PI/2);
-        //plane.rotateY(Math.PI/2);
-       // plane.rotation.x = Math.PI / 12;
-        planeTop.rotation.x = -Math.PI/2 ;
+            planeTop.rotation.x = -Math.PI/2 ;
         planeTop.position.y = 5;	
 		planeTop.receiveShadow = true;
 		
@@ -157,17 +158,18 @@
         sphere.position.x = xPos;
         sphere.position.y = yPos;
         sphere.position.z = zPos;
-        var hex = 0xffffff;
-        material.color.setHex(0xffffff);;
+        var hex = 0x00ff00;
+        //material.color.setHex(0xffffff);;
 
         function animate() {
             requestAnimationFrame(animate);
 
-            //Code to rotate sphere   
+            
+            //L5:Sphere spinning   
             sphere.rotateX(Math.PI / 180);
             sphere.rotateY(Math.PI / 180);
 
-            //bouncing
+            //L5: Bounce on plane
 			//x
             if (sphere.position.x + r >= 5) {
                 verticalSpeed = -1 * verticalSpeed;
@@ -194,8 +196,13 @@
 			sphere.position.y += ySpeed;
 			sphere.position.z += zSpeed;
 
+            /*
+            * change color usig hex number or offsetHSL
+            */
             material.color.setHex(hex);
             hex--;
+
+           // sphere.material.color.offsetHSL(0.005,0,0);
 
 			camera.lookAt(sphere.position);
 			
