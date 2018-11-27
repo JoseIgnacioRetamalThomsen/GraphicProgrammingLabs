@@ -180,7 +180,7 @@ for i in range(len(matchesMask1)):
 
 
     
-
+#fran not working need python 3.
 #imgFlann3 = cv2.drawMatchesKnn(imgFlann1,kpFlann1,imgFlann2,kpFlann2,matches,None,**draw_params)
 imgFlann3 = drawMatches(imgFlann1,kpFlann1,imgFlann2,kpFlann2,matches1D)
 

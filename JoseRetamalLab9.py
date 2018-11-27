@@ -112,13 +112,21 @@ plt.yticks([])
 imgM = cv2.imread('car.jpg',) 
 
 #convert to gray scale
-grayM = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+grayMNotBlur = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+#blur 2
+KernelSizeWidth2 = 3
+KernelSizeHeight2 = 3
+grayM = cv2.GaussianBlur(grayMNotBlur,(KernelSizeWidth2, KernelSizeHeight2),0)
 
 i, j = grayM.shape
 
+treshold1 =30
+treshold2 = 15
+
 for x in range(0,i-2):
     for y in range(0,j-2):
-        if ( ((grayM[x][y] - grayM[x+1][y])>80)  & ((grayM[x][y] - grayM[x+2][y])>80)  & ((grayM[x][y] - grayM[x-1][y])>80) & ((grayM[x][y] - grayM[x][y+1])>80) & ((grayM[x][y] - grayM[x][y-1])>80) ):
+        if ( ((grayM[x][y] - grayM[x+1][y])>treshold1)  & ((grayM[x][y] - grayM[x+2][y])>treshold2)  & ((grayM[x][y] - grayM[x-1][y])>treshold1) & ((grayM[x][y] - grayM[x][y+1])>treshold2) & ((grayM[x][y] - grayM[x][y-1])>treshold2) & ((grayM[x][y] - grayM[x+1][y+1])>treshold2) & ((grayM[x][y] - grayM[x-1][y-1])>treshold2) & ((grayM[x][y] - grayM[x-2][y])>treshold2) ):
             grayM[x][y]=255
         else:
             grayM[x][y]=0
@@ -130,7 +138,7 @@ imgM = cv2.imread('car.jpg',)
 manualEdge = grayM 
 #show
 plt.subplot(nrows, ncols,10),plt.imshow(manualEdge, cmap = 'gray')
-plt.title("sobel treshold")
+plt.title("manual ")
 plt.xticks([])
 plt.yticks([])
 
