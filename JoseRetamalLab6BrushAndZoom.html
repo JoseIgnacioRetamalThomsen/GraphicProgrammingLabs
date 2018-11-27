@@ -26,6 +26,7 @@
 </head>
 
 <body>
+        <h1>Jose Retamal - Group C - Lab 6 Brush and zoom</h1>
     <script type="text/javascript">
 
         //get data from jsonblob
@@ -51,7 +52,8 @@
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom);
 
-            var focus = svg.append("g")  //add group to leave margin for axis
+            //focus and context for apply zoom, we wil apend to this
+            var focus = svg.append("g")  
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
             var context = svg.append("g")
                 .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
@@ -78,13 +80,13 @@
 
                 return parseDate(d["Date"]);
 
-            })).range([0, width])//.range([0, width]);
+            })).range([0, width]);
 
             var y2 = d3.scaleLinear().domain(d3.extent(data, function (d) {
                 return d["GBP/EUR"]
             })).range([height2, 0])
 
-
+            //create line
             var line = d3.line()
                 .x(function (d) { return x(parseDate(d["Date"])); })
                 .y(function (d) { return y(d["GBP/EUR"]); })
