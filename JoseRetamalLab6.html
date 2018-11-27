@@ -15,6 +15,7 @@
 
 <body>
     <h1>Jose Retamal - Group C - Lab 6</h1>
+    <h2>GBP/EUR over time </h2>
     <script type="text/javascript">
 
         //get data from jsonblob
@@ -80,13 +81,13 @@
             var xAxisGroup = svg.append("g").call(xAxis).attr("transform", "translate(0," + height + ")");
 
             //add label for x axis and y axis
-            svg.append("text").text("Date")
+            svg.append("text").text("GB/EUR")
                 .attr("x", 0 - height / 2)
                 .attr("y", 0 - margin.left)
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
                 .attr("transform", "rotate(-90)");
-            svg.append("text").text("value")
+            svg.append("text").text("Date")
                 .attr("x", width / 2)
                 .attr("y", height + margin.bottom)
                 .style("text-anchor", "middle");
@@ -101,9 +102,9 @@
             function zoomed() {
                 //zoom line
                 linePath.attr("transform", d3.event.transform);
-                //zom x axis
+                //zoom x axis
                 xAxisGroup.call(xAxis.scale(d3.event.transform.rescaleX(x)));//rescaleX - change the xScale domain with the transforming info
-                //scale y axis not in user
+                //zoom y not in use
                 //yAxisGroup.call(yAxis.scale(d3.event.transform.rescaleY(y)));//rescaleY - change the yScale domain with the transforming info
 
             }
@@ -112,7 +113,7 @@
             //limit the grpth to boundaris when zoming
             d3.select("svg").append("defs").append("clipPath").attr("id", "clip")
                 .append("rect").attr("width", width).attr("height", height);
-            lineGroup.attr("clip-path", "url(#clip)");//line group is in a fixed position and the path will be moved
+            lineGroup.attr("clip-path", "url(#clip)");
 
         }
     </script>
