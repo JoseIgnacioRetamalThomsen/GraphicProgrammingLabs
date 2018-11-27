@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>D3.js Jose Retamal Computing Graphic lab 6 Part 2</title>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <meta charset="UTF-8">
+    <style type="text/css">
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 2px;
+        }
+
+        .tick line {
+            opacity: 0.2;
+        }
+
+        .zoom {
+            cursor: move;
+            fill: none;
+            pointer-events: all;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="text/javascript">
+
+        //get data from jsonblob
+        $.getJSON("https://jsonblob.com/api/60b035d5-d579-11e8-a295-3724bafc7173", function (data) {
+
+            //log the data
+            console.log(data);
+
+            //cal plotCurrencyData with data
+            plotCurrencyData(data);
+
+        })//end of read data
+        function plotCurrencyData(data) {
+            var margin = { top: 20, right: 20, bottom: 90, left: 50 },
+                margin2 = { top: 230, right: 20, bottom: 30, left: 50 },
+                width = 600 - margin.left - margin.right,
+                height = 300 - margin.top - margin.bottom,
+                height2 = 300 - margin2.top - margin2.bottom;
+
+
+            //this is svg is actually group
+            var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom);
+
+            var focus = svg.append("g")  //add group to leave margin for axis
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var context = svg.append("g")
+                .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+
+            //create a date parse
+            var parseDate = d3.timeParse("%d/%m/%Y");
+
+            //set x data axis parsing date data
+            //x scale
+            var x = d3.scaleTime().range([0, width]).domain(d3.extent(data, function (d) {
+
+                return parseDate(d["Date"]);
+
+            })).range([0, width]);
+
+            //y scale
+            var y = d3.scaleLinear().domain(d3.extent(data, function (d) {
+                return d["GBP/EUR"]
+            })).range([height, 0]);
+
+            //x2 and y2 scale for small graphic
+            var x2 = d3.scaleTime().domain(d3.extent(data, function (d) {
+
+                return parseDate(d["Date"]);
+
+            })).range([0, width])//.range([0, width]);
+
+            var y2 = d3.scaleLinear().domain(d3.extent(data, function (d) {
+                return d["GBP/EUR"]
+            })).range([height2, 0])
+
+
+            var line = d3.line()
+                .x(function (d) { return x(parseDate(d["Date"])); })
+                .y(function (d) { return y(d["GBP/EUR"]); })
+                .curve(d3.curveBasis);
+
+            focus.append("path").attr("class", "line").attr("d", line(data));
+
+            var line2 = d3.line()
+                .x(function (d) { return x2(parseDate(d["Date"])); })
+                .y(function (d) { return y2(d["GBP/EUR"]); })
+                .curve(d3.curveBasis);
+
+            context.append("path").attr("class", "line").attr("d", line2(data));
+
+
+            //add x and y axis
+            var yAxis = d3.axisLeft(y).tickSize(10);
+            var yAxisGroup = focus.append("g").call(yAxis);
+
+
+            var xAxis = d3.axisBottom(x).tickSize(5);
+            var xAxisGroup = focus.append("g").call(xAxis).attr("transform", "translate(0," + height + ")");
+
+            //small x axis
+            var xAxis2 = d3.axisBottom(x2);//no need to create grid
+            var xAxisGroup2 = context.append("g").call(xAxis2).attr("transform", "translate(0," + height2 + ")")
+
+            //zoom
+            var zoom = d3.zoom()
+                .scaleExtent([1, Infinity])// <1 means can resize smaller than  original size
+                .translateExtent([[0, 0], [width, height]])
+                .extent([[0, 0], [width, height]])//view point size
+                .on("zoom", zoomed);
+            //add zoom
+            svg.append("rect")
+                .attr("class", "zoom")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                .call(zoom);
+
+            //brush
+            var brush = d3.brushX()
+                .extent([[0, 0], [width, height2]])//(x0,y0)  (x1,y1)
+                .on("brush end", brushed);//when mouse up, move the selection to the exact tick //start(mouse down), brush(mouse move), end(mouse up)
+
+            context.append("g")
+                .attr("class", "brush")
+                .call(brush)
+                .call(brush.move, x2.range());
+            //zoomed call on zoom
+            function zoomed() {
+
+                if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+                x.domain(d3.event.transform.rescaleX(x2).domain());
+                focus.select(".line").attr("d", line(data));
+                xAxisGroup.call(xAxis);//rescale x
+
+                //brush area
+                context.select(".brush").call(brush.move, [x2(d3.event.transform.rescaleX(x2).domain()[0]), x2(d3.event.transform.rescaleX(x2).domain()[1])]);
+            }
+
+            //brushed call in brush
+            function brushed() {
+                if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+
+                x.domain([x2.invert(d3.event.selection[0]), x2.invert(d3.event.selection[1])]);
+                focus.select(".line").attr("d", line(data));
+                xAxisGroup.call(xAxis);//rescale x
+            }
+
+            //set limits
+            svg.append("defs").append("clipPath").attr("id", "clip")
+                .append("rect").attr("width", width).attr("height", height);
+            focus.select(".line").attr("clip-path", "url(#clip)");
+        }
+    </script>
+</body>
+
+</html>

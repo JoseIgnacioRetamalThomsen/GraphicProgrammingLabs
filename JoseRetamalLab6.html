@@ -2,11 +2,15 @@
 <html>
 
 <head>
-    <title>D3.js Demo</title>
+    <title>D3.js Jose Retamal Computing Graphic lab 6</title>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <meta charset="UTF-8">
-    <style type="text/css"></style>
+    <style type="text/css">
+     
+        
+
+    </style>
 </head>
 
 <body>
@@ -33,14 +37,12 @@
             var height = canvasSize.height - margin.top - margin.bottom;
 
             //create svg
-            var svg = d3.select("body").append("svg").attr("width", canvasSize.width).attr("height", canvasSize.height)
-            .call(d3.zoom().on("zoom", function () {
-                    console.log("s");
-                    svg.attr("transform", d3.event.transform);
-                })).append("g").attr("transform", "translate(" + margin.left + "," + margin.bottom + ")");
-
-             
-               // 
+            var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .call(d3.zoom().on("zoom", zoomed)) //add zoom
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
             //create a date parse
             var parseDate = d3.timeParse("%d/%m/%Y");
@@ -52,38 +54,64 @@
 
             })).range([0, width]);
 
-            //set x data into x axis and set ticks
-            var xAxis = d3.axisBottom(x).ticks(10);
-
-            //set y data , parse value 
+            //y scale
             var y = d3.scaleLinear().domain(d3.extent(data, function (d) {
                 return d["GBP/EUR"]
             })).range([height, 0]);
 
-            //set y data and set ticks
-            var yAxis = d3.axisLeft(y).ticks(5);
-
-            //create the line
-            var valueline = d3.line()
+            //set line
+            var line = d3.line()
                 .x(function (d) { return x(parseDate(d["Date"])); })
-                .y(function (d) { return y(d["GBP/EUR"]); });
+                .y(function (d) { return y(d["GBP/EUR"]); })
+                .curve(d3.curveBasis);
+
+            //line group for zoon 
+            var lineGroup = svg.append("g")
+            //add path and set blue color
+            var linePath = lineGroup.append("path").attr("d", line(data)).attr("stroke", "blue").attr("fill", "none");
+            
+            //y axis set ticks
+            var yAxis = d3.axisLeft(y).ticks(5);
+            var yAxisGroup = svg.append("g").call(yAxis);
+
+            //x axis set ticks
+            var xAxis = d3.axisBottom(x).ticks(10);
+            var xAxisGroup = svg.append("g").call(xAxis).attr("transform", "translate(0," + height + ")");
+
+            //add label for x axis and y axis
+            svg.append("text").text("Date")
+                .attr("x", 0 - height / 2)
+                .attr("y", 0 - margin.left)
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .attr("transform", "rotate(-90)");
+            svg.append("text").text("value")
+                .attr("x", width / 2)
+                .attr("y", height + margin.bottom)
+                .style("text-anchor", "middle");
+
+            //add zoom
+            var zoom = d3.zoom()
+                .scaleExtent([1, 30])// less than 1 means can resize smaller than  original size
+                .translateExtent([[-width, -height], [2 * width, 2 * height]])
+                .on("zoom", zoomed);
+
+            //zoom function
+            function zoomed() {
+                //zoom line
+                linePath.attr("transform", d3.event.transform);
+                //zom x axis
+                xAxisGroup.call(xAxis.scale(d3.event.transform.rescaleX(x)));//rescaleX - change the xScale domain with the transforming info
+                //scale y axis not in user
+                //yAxisGroup.call(yAxis.scale(d3.event.transform.rescaleY(y)));//rescaleY - change the yScale domain with the transforming info
+
+            }
 
 
-            //append x axis to svg
-            svg.append("g").attr("class", "x-axis").call(xAxis).attr("transform", "translate(0," + (height) + ")");
-
-            //append y axis to svg
-            svg.append("g").attr("class", "y-axis").call(yAxis);
-
-            //append value line
-            svg.append("path").attr("d", valueline(data)).attr("stroke", "blue").attr("fill", "none");
-
-            //add labels
-            svg.append("text").attr("x", -50).attr("y", 300).style("text-anchor", "middle").text("Value");
-            //add labels
-            svg.append("text").attr("x", (canvasSize.width / 2) - 50).attr("y", canvasSize.height - 50).style("text-anchor", "middle").text("Date");
-
-          
+            //limit the grpth to boundaris when zoming
+            d3.select("svg").append("defs").append("clipPath").attr("id", "clip")
+                .append("rect").attr("width", width).attr("height", height);
+            lineGroup.attr("clip-path", "url(#clip)");//line group is in a fixed position and the path will be moved
 
         }
     </script>
