@@ -138,7 +138,7 @@ imgM = cv2.imread('car.jpg',)
 manualEdge = grayM 
 #show
 plt.subplot(nrows, ncols,10),plt.imshow(manualEdge, cmap = 'gray')
-plt.title("manual ")
+plt.title("Manual ")
 plt.xticks([])
 plt.yticks([])
 
